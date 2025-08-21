@@ -131,7 +131,7 @@ function JoinPage() {
                 {error && <p>{error}</p>}
 
                 <button type="submit" disabled={isUsernameValid !== true}>회원가입</button>
-                <div className="back" onClick={() => navigate("/api/auth/loginchoice")}>
+                <div className="back" onClick={() => navigate("/auth/loginchoice")}>
                 ← 로그인선택화면으로
                 </div>          
             </form>

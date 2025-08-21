@@ -29,7 +29,7 @@ function IndexPage() {
           <button>Download on the App Store</button>
           <button>Get it on Google Play</button>
         </div>
-        <button className="goto-loginchoicepage" onClick={() => navigate("/api/auth/loginchoice")}>
+        <button className="goto-loginchoicepage" onClick={() => navigate("/auth/loginchoice")}>
           로그인 / 회원가입으로 이동
         </button>
       </div>

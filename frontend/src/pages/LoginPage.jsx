@@ -68,7 +68,7 @@ function LoginPage() {
         <button type="submit">계속</button>
 
         {/* 로그인 선택화면 이동 */}
-        <div className="back" onClick={() => navigate("/api/auth/loginchoice")}>
+        <div className="back" onClick={() => navigate("/auth/loginchoice")}>
           ← 로그인선택화면으로
         </div>
       </form>
