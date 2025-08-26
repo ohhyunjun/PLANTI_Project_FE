@@ -51,7 +51,7 @@ function MainPage() {
     <div className="flex flex-col h-screen">
       {/* 상단 바 */}
       <div className="flex items-center justify-between p-4 bg-green-100 shadow">
-        <button onClick={() => navigate("/")}>🏠 Home</button>
+        <button onClick={() => navigate("/main")}>🏠 Home</button>
         <div className="flex items-center gap-4">
           <button>🔔</button>
           <button onClick={() => navigate("/main/setting")}>☰</button>
@@ -67,11 +67,11 @@ function MainPage() {
 
       {/* 메뉴 버튼 */}
       <div className="grid grid-cols-5 gap-2 p-4">
-        <button onClick={() => navigate("/myfarm")} className="p-2 bg-green-300 rounded-xl">My Farm</button>
+        <button onClick={() => navigate("/main")} className="p-2 bg-green-300 rounded-xl">My Farm</button>
         <button onClick={() => navigate("/main/diary")} className="p-2 bg-green-300 rounded-xl">Diary</button>
         <button onClick={() => navigate("/main/aiphoto")} className="p-2 bg-green-300 rounded-xl">AI Photo</button>
         <button onClick={() => navigate("/main/community")} className="p-2 bg-green-300 rounded-xl">Community</button>
-        <button onClick={() => navigate("/main/fkits")} className="p-2 bg-green-300 rounded-xl">Kits</button>
+        <button onClick={() => navigate("/main/kits")} className="p-2 bg-green-300 rounded-xl">Kits</button>
       </div>
 
       {/* My Farm 섹션 */}
@@ -167,7 +167,7 @@ function MainPage() {
 
       {/* 하단 고정 네비게이션 바 */}
       <div className="flex justify-around items-center p-4 bg-green-100 shadow">
-        <button onClick={() => navigate("/")}>🏠 홈</button>
+        <button onClick={() => navigate("/main")}>🏠 홈</button>
         <button onClick={() => navigate("/main/setting")}>👤 내정보</button>
       </div>
     </div>

@@ -12,7 +12,7 @@ function JoinPage() {
     const [username, setUsername] = useState("");
     const [isUsernameValid, setIsUsernameValid] = useState(null); // null: 검사 전, true: 사용 가능, false: 중복
     const [password, setPassword] = useState("");
-    const [nickname, setNickname] = useState("");
+    // const [nickname, setNickname] = useState("");
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
 
@@ -110,14 +110,14 @@ function JoinPage() {
                     minLength={4}
                 />
 
-                <label>이름</label>
+                {/* <label>이름</label>
                 <input
                     type="text"
                     placeholder="이름"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     required
-                />
+                /> */}
 
                 <label>이메일</label>
                 <input
