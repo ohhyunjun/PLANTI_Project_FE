@@ -20,10 +20,10 @@ function LoginPage() {
     }
 
     try {
-      const res = await fetch(`${BACKEND_API_BASE_URL}/login`, {
+      const res = await fetch(`${BACKEND_API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        //credentials: "include",
         body: JSON.stringify({ username, password }),
       });
 
@@ -36,6 +36,7 @@ function LoginPage() {
       // 로그인 성공 후 원하는 페이지로 이동 가능
       navigate("/dashboard"); 
     } catch (err) {
+      console.error("로그인 실패:", err); 
       setError("아이디 또는 비밀번호가 틀렸습니다.");
     }
   };
