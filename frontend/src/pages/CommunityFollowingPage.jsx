@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import downloadedImage from '../assets/strawberry.jpg';
 
 function CommunityFollowingPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState(""); // ✅ 검색어 상태
+  const [query, setQuery] = useState("");
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -25,7 +26,7 @@ function CommunityFollowingPage() {
           <button
             className="icon-btn"
             title="메뉴"
-            onClick={() => nav("/main/setting")}
+            onClick={() => navigate("/main/setting")}
           >
             ☰
           </button>
@@ -42,6 +43,16 @@ function CommunityFollowingPage() {
         />
         <button className="search-btn" type="submit" title="검색">🔍</button>
       </form>
+      
+      {/* 🍓 배너 이미지 추가 */}
+      {/* img 태그에 클래스 이름을 부여하고, src 속성에 이미지를 불러온 변수를 사용합니다. */}
+      <div className="banner">
+        <img
+          src={downloadedImage}
+          alt="배너 이미지"
+          className="strawberry-img"
+        />
+      </div>
 
       {/* 팔로잉 한 사람들의 게시글 */}
       <div className="posts">

@@ -12,6 +12,8 @@ import SearchPage from "./pages/SearchPage";
 import SettingPage from "./pages/SettingPage";
 import AiPhotoStartPage from "./pages/AiPhotoStartPage";
 import DiaryPage from "./pages/DiaryPage";
+import NogrowPage from "./pages/NogrowPage";
+import GrowPage from "./pages/GrowPage";
 
 
 import './App.css'
@@ -39,14 +41,21 @@ function App() {
         <Route path="/main/setting" element={<SettingPage />} />
         <Route path="/main/aiphoto" element={<AiPhotoStartPage />} />
         <Route path="/main/diary" element={<DiaryPage />} />
+        
 
         {/* 커뮤니티 기능들 */}
         <Route path="/main/community/following" element={<CommunityFollowingPage />} />
         <Route path="/main/community/explore" element={<CommunityExplorePage />} />
         <Route path="/main/community/search" element={<SearchPage />} />
 
+        {/* IoT 연결 후 기능들 */}
+        <Route path="/main/device/:id/nogrow" element={<NogrowPage />} />
+        <Route path="/main/device/:id/manage" element={<GrowPage />} />
+
+
+
         
-        
+
 
 
 

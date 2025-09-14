@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+// 1. 이미지를 import 문으로 불러옵니다.
+import strawberryImage from "../assets/strawberry.jpg";
 
 const API_BASE = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
@@ -8,7 +10,7 @@ export default function CommunityStartPage() {
 
   const [explore, setExplore] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState(""); 
+  const [query, setQuery] = useState("");
 
   // 추천 피드 불러오기
   const loadExplore = async () => {
@@ -86,10 +88,8 @@ export default function CommunityStartPage() {
 
       {/* 배너 (이벤트/광고) */}
       <section className="comm-banner">
-        <img
-          src="https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?q=80&w=1200&auto=format&fit=crop"
-          alt="Strawberry Event"
-        />
+        {/* 2. src 속성을 import한 변수로 설정합니다. */}
+        <img src={strawberryImage} alt="Strawberry Event" />
         <div className="banner-caption">
           <div className="banner-title">Whose strawberry is the best?</div>
           <div className="banner-sub">딸기 재배 챌린지에 참여해보세요!</div>
