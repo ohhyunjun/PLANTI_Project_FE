@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { plants } from "../MockPlants";
+import plants from '/src/data/MockPlants.js';
 import styled from "styled-components";
 import PlantList from "./PlantList";
 

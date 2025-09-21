@@ -87,12 +87,22 @@ export default function CommunityStartPage() {
       </nav>
 
       {/* 배너 (이벤트/광고) */}
-      <section className="comm-banner">
-        {/* 2. src 속성을 import한 변수로 설정합니다. */}
-        <img src={strawberryImage} alt="Strawberry Event" />
-        <div className="banner-caption">
-          <div className="banner-title">Whose strawberry is the best?</div>
-          <div className="banner-sub">딸기 재배 챌린지에 참여해보세요!</div>
+      <section className="comm-banner flex flex-col items-center py-4">
+        {/* 400x400, cover 적용 */}
+        <img
+          src={strawberryImage}
+          alt="Strawberry Event"
+          style={{
+            width: "400px",
+            height: "400px",
+            objectFit: "cover",
+            borderRadius: "12px",
+          }}
+          className="shadow-md"
+        />
+        <div className="banner-caption text-center mt-2">
+          <div className="banner-title font-bold">Whose strawberry is the best?</div>
+          <div className="banner-sub text-sm">딸기 재배 챌린지에 참여해보세요!</div>
         </div>
       </section>
 

@@ -1,66 +1,36 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { devices } from "../MockDevices";
-import PlantSearchModal from "../components/PlantSearchModal";
+import { devices } from "../data/MockDevices";
+import { Plus } from "lucide-react";
+import Layout from "../components/Layout";
 
 function NogrowPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [selectedPlant, setSelectedPlant] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const deviceId = Number(id);
+  const device = devices.find((d) => d.id === deviceId);
 
-  const handleRegister = () => {
-    const deviceId = Number(id);
-    const device = devices.find((d) => d.id === deviceId);
-
-    if (device && selectedPlant) {
-      device.plant = selectedPlant.name;
-      device.category = selectedPlant.category;
-      device.imageUrl = selectedPlant.imageUrl;
-      device.sensors = {
-        temperature: 25 + Math.floor(Math.random() * 5),
-        humidity: 50 + Math.floor(Math.random() * 20),
-        soilMoisture: 40 + Math.floor(Math.random() * 20),
-      };
-
-      navigate(`/main/device/${deviceId}/manage`);
-    }
+  const handleAddPlant = () => {
+    navigate(`/main/device/${deviceId}/nogrow/new`);
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h2 className="text-xl font-bold mb-4">새로운 식물 등록</h2>
-      <p className="mb-4 text-gray-700">
-        이 기기에는 아직 식물이 등록되지 않았습니다. <br />
-        아래에서 식물을 찾아 등록해 주세요.
+    <div className="p-6 max-w-lg mx-auto text-center">
+      <h2 className="text-xl font-bold mb-4">재배 중인 식물이 없습니다</h2>
+      <p className="text-gray-600 mb-6">
+        이 기기에는 현재 등록된 식물이 없어요. <br />
+        새로운 식물을 등록해보세요!
       </p>
 
-      <div className="flex items-center">
-        <div
-          className="flex-1 border p-2 rounded cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
-        >
-          {selectedPlant ? selectedPlant.name : "식물 찾기"}
-        </div>
+      <div className="flex justify-center">
         <button
-          onClick={handleRegister}
-          disabled={!selectedPlant}
-          className={`ml-2 px-4 py-2 text-white rounded 
-            ${!selectedPlant ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+          onClick={handleAddPlant}
+          className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-2xl shadow-md transition"
         >
-          등록하기
+          
+          + 식물 등록하기
         </button>
       </div>
-
-      {isModalOpen && (
-        <PlantSearchModal
-          onSelectPlant={(plant) => {
-            setSelectedPlant(plant);
-            setIsModalOpen(false);
-          }}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
     </div>
   );
 }

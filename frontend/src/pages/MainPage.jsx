@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Layout from "../components/Layout"; // ✅ Layout 불러오기
 
 function MainPage() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ function MainPage() {
       id: Date.now(),
       name: "내 스마트 화분",
       code: inputCode,
-      image: "/assets/device.png", // ✅ public/assets에 이미지 넣어야 함
+      image: "/assets/device.png", // ✅ public/assets/device.png 필요
       plant: null,
     };
 
@@ -63,27 +64,68 @@ function MainPage() {
   // 기기 클릭 시 페이지 이동
   const handleDeviceClick = (device) => {
     if (!device.plant) {
-      navigate(`/main/device/:id/nogrow`);
+      navigate(`/main/device/${device.id}/nogrow`);
     } else {
-      navigate(`/main/device/:id/manage`);
+      navigate(`/main/device/${device.id}/manage`);
     }
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* 상단 바 */}
-      <div className="flex items-center justify-between p-4 bg-green-100 shadow">
-        <button onClick={() => navigate("/main")}>🏠 Home</button>
-        <div className="flex items-center gap-4">
-          <button>🔔</button>
-          <button onClick={() => navigate("/main/setting")}>☰</button>
-        </div>
+    <Layout>
+      {/* 상단 기능 버튼 (피그마 스타일 4개 버튼) */}
+      <div className="grid grid-cols-2 gap-4 p-4">
+        <button
+          onClick={() => navigate("/main")} // ✅ My Farm 버튼: 단순 이동 (지금은 자기 자신)
+          className="bg-green-200 rounded-2xl shadow p-6 flex flex-col items-center hover:bg-green-300 transition"
+        >
+          <img
+            src="/assets/icons/farm.png"
+            alt="My Farm"
+            className="w-12 h-12 mb-2"
+          />
+          <span className="font-bold">My Farm</span>
+        </button>
+
+        <button
+          onClick={() => navigate("/main/diary")}
+          className="bg-yellow-200 rounded-2xl shadow p-6 flex flex-col items-center hover:bg-yellow-300 transition"
+        >
+          <img
+            src="/assets/icons/diary.png"
+            alt="Diary"
+            className="w-12 h-12 mb-2"
+          />
+          <span className="font-bold">Diary</span>
+        </button>
+
+        <button
+          onClick={() => navigate("/main/aiphoto")}
+          className="bg-blue-200 rounded-2xl shadow p-6 flex flex-col items-center hover:bg-blue-300 transition"
+        >
+          <img
+            src="/assets/icons/aiphoto.png"
+            alt="AI Photo"
+            className="w-12 h-12 mb-2"
+          />
+          <span className="font-bold">AI Photo</span>
+        </button>
+
+        <button
+          onClick={() => navigate("/main/community")}
+          className="bg-pink-200 rounded-2xl shadow p-6 flex flex-col items-center hover:bg-pink-300 transition"
+        >
+          <img
+            src="/assets/icons/community.png"
+            alt="Community"
+            className="w-12 h-12 mb-2"
+          />
+          <span className="font-bold">Community</span>
+        </button>
       </div>
 
-      {/* My Farm 섹션 */}
+      {/* ✅ My Farm 섹션 (항상 표시) */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="flex justify-between items-center mb-2">
-          
           <h3 className="text-lg font-bold">My Farm</h3>
           {showCodeInput ? (
             <div className="flex items-center gap-2">
@@ -140,7 +182,9 @@ function MainPage() {
                   />
                   <div>
                     <p className="font-bold">{device.name}</p>
-                    <p className="text-sm text-gray-600">코드: {device.code}</p>
+                    <p className="text-sm text-gray-600">
+                      코드: {device.code}
+                    </p>
                     <p className="text-sm mt-1">
                       {device.plant
                         ? `🌱 ${device.plant} 관리 중`
@@ -167,13 +211,7 @@ function MainPage() {
           </div>
         )}
       </div>
-
-      {/* 하단 네비 */}
-      <div className="flex justify-around items-center p-4 bg-green-100 shadow">
-        <button onClick={() => navigate("/main")}>🏠 홈</button>
-        <button onClick={() => navigate("/main/setting")}>👤 내정보</button>
-      </div>
-    </div>
+    </Layout>
   );
 }
 

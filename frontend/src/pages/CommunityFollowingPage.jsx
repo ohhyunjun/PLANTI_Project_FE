@@ -1,69 +1,85 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import downloadedImage from '../assets/strawberry.jpg';
+import { usePosts } from "../context/PostContext";
+import downloadedImage from "../assets/strawberry.jpg";
+
 
 function CommunityFollowingPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const { posts } = usePosts();
 
   const onSearch = (e) => {
     e.preventDefault();
     if (!query.trim()) return;
-
-    // 검색 로직 (예: 검색 페이지로 이동)
     navigate(`/main/community/search?keyword=${query}`);
   };
 
   return (
-    <div className="community">
+    <div className="community min-h-screen flex flex-col bg-gray-50">
       {/* 상단 헤더 */}
-      <header className="header">
-        <button onClick={() => navigate("/main/community")}>←</button>
-        <h2>팔로잉</h2>
-
-        <div className="right-icons">
-          <button className="icon-btn" title="알림">🔔</button>
-          <button
-            className="icon-btn"
-            title="메뉴"
-            onClick={() => navigate("/main/setting")}
-          >
-            ☰
-          </button>
+      <header className="flex items-center justify-between px-4 py-2 shadow-md bg-white">
+        <button onClick={() => navigate("/main/community")} className="text-xl font-bold">
+          ←
+        </button>
+        <h2 className="text-lg font-semibold">팔로잉</h2>
+        <div className="flex items-center space-x-3">
+          <button title="알림">🔔</button>
+          <button onClick={() => navigate("/main/setting")} title="메뉴">☰</button>
         </div>
       </header>
 
       {/* 검색창 */}
-      <form className="comm-search" onSubmit={onSearch}>
+      <form className="flex items-center border-b px-4 py-2 bg-white" onSubmit={onSearch}>
         <input
           type="text"
           placeholder="아이디 검색"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          className="flex-1 border rounded px-2 py-1 mr-2"
         />
-        <button className="search-btn" type="submit" title="검색">🔍</button>
+        <button className="px-3 py-1 bg-blue-500 text-white rounded" type="submit">
+          🔍
+        </button>
       </form>
-      
-      {/* 🍓 배너 이미지 추가 */}
-      {/* img 태그에 클래스 이름을 부여하고, src 속성에 이미지를 불러온 변수를 사용합니다. */}
-      <div className="banner">
+
+      {/* 배너 */}
+      <div className="flex justify-center items-center py-4">
         <img
           src={downloadedImage}
           alt="배너 이미지"
-          className="strawberry-img"
+          style={{ width: "400px", height: "400px", objectFit: "cover", borderRadius: "12px" }}
+          className="shadow-md"
         />
       </div>
 
-      {/* 팔로잉 한 사람들의 게시글 */}
-      <div className="posts">
-        <p>팔로잉한 사람들의 게시글이 여기에 표시됩니다.</p>
+      {/* 게시글 */}
+      <div className="flex-1 px-4 py-2 space-y-4">
+        {posts.map((post) => (
+          <div key={post.id} className="bg-white p-4 rounded shadow">
+            <p className="font-bold">{post.author}</p>
+            <p className="mt-1">{post.content}</p>
+            {post.image && (
+              <img src={post.image} alt="게시글 이미지" className="mt-2 w-full rounded" />
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              {new Date(post.createdAt).toLocaleString()}
+            </p>
+          </div>
+        ))}
       </div>
 
-      {/* 하단 고정 홈 버튼 */}
-      <footer className="footer">
-        <Link className="home-btn" to="/main/community">Home</Link>
-        <Link className="create-post-btn" to="/community/create">+</Link>
-        <Link className="activity-log-btn" to="/community/activity">하트</Link>
+      {/* 하단 고정 버튼 */}
+      <footer className="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white shadow-inner py-2">
+        <Link className="px-4 py-2 text-blue-600 font-medium" to="/main/community">
+          Home
+        </Link>
+        <Link className="px-4 py-2 text-green-600 font-bold text-2xl" to="/community/create">
+          +
+        </Link>
+        <Link className="px-4 py-2 text-red-500 font-medium" to="/community/activity">
+          하트
+        </Link>
       </footer>
     </div>
   );
