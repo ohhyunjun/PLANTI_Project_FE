@@ -80,6 +80,9 @@ function CommunityFollowingPage() {
         <Link className="px-4 py-2 text-red-500 font-medium" to="/community/activity">
           하트
         </Link>
+        <Link className="px-4 py-2 text-red-500 font-medium" to="/community/mypage">
+          my page
+        </Link>
       </footer>
     </div>
   );

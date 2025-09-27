@@ -143,9 +143,18 @@ export default function CommunityStartPage() {
 
       {/* 하단 버튼 */}
       <footer className="comm-footer">
-        <Link className="home-btn" to="/main/community">Home</Link>
-        <Link className="create-post-btn" to="/community/create">+</Link>
-        <Link className="activity-log-btn" to="/community/activity">하트</Link>
+        <Link className="home-btn" to="/main/community">
+        Home
+        </Link>
+        <Link className="create-post-btn" to="/community/create">
+        +
+        </Link>
+        <Link className="activity-log-btn" to="/community/activity">
+        하트
+        </Link>
+        <Link className="px-4 py-2 text-red-500 font-medium" to="/community/mypage">
+          my page
+        </Link>
       </footer>
     </div>
   );

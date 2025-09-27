@@ -1,9 +1,9 @@
 // src/pages/GrowPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import plants from "../data/plants.js"; // .js 확장자 명시
-import { devices as mockDevices } from "../data/MockDevices.js"; // .js 확장자 명시
-import { fetchDevice, postDeviceControl } from "../services/DeviceService.js"; // .js 확장자 명시
+import plants from "../data/plants.js";
+import { devices as mockDevices } from "../data/MockDevices.js";
+import { fetchDevice, postDeviceControl } from "../services/DeviceService.js";
 
 function GrowPage() {
   const { id } = useParams();
@@ -36,16 +36,14 @@ function GrowPage() {
     let mounted = true;
 
     const loadDevice = async () => {
-      let dev = await fetchDevice(deviceId); // 백엔드 호출
+      let dev = await fetchDevice(deviceId);
       if (!dev) {
-        dev = mockDevices.find((d) => d.id === deviceId); // fallback
+        dev = mockDevices.find((d) => d.id === deviceId);
       }
       if (mounted) setDevice(dev || null);
     };
 
     loadDevice();
-
-    // 10초마다 센서/조명 갱신
     pollingRef.current = setInterval(loadDevice, 10000);
 
     return () => {
@@ -70,13 +68,12 @@ function GrowPage() {
       },
     };
     setDevice(updated);
-
-    // 백엔드 반영
     await postDeviceControl(deviceId, { light: updated.sensors.light });
   };
 
   return (
     <div className="p-4 max-w-xl mx-auto">
+      {/* 상단 제목 */}
       <h2 className="text-xl font-bold mb-2">
         {plantInfo ? `${plantInfo.name} ${dayCount ?? "-"}일차` : "식물 미등록"}
       </h2>
@@ -89,7 +86,8 @@ function GrowPage() {
         />
       )}
 
-      <div className="space-y-2 mb-4">
+      {/* 센서 데이터 */}
+      <div className="space-y-2 mb-6">
         <p>
           🌡️ 온도: {device.sensors.temperature ?? "-"}°C (
           {getTempStatus(plantInfo, device.sensors.temperature)})
@@ -98,53 +96,62 @@ function GrowPage() {
         <p>🌱 토양 수분: {device.sensors.soilMoisture ?? "-"}%</p>
       </div>
 
+      {/* ✅ 조명 제어 UI - 피그마 디자인 반영 */}
       {device.sensors.light && (
-        <div className="p-3 border rounded bg-gray-50">
-          <h3 className="font-bold mb-2">💡 조명 제어</h3>
+        <div className="p-4 bg-white rounded-2xl shadow-md border border-gray-200">
+          <h3 className="text-lg font-bold mb-4">💡 조명 제어</h3>
 
-          <div className="flex items-center gap-2 mb-2">
-            <label>상태:</label>
+          {/* ON/OFF 토글 버튼 */}
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-medium">상태</span>
             <button
-              onClick={() =>
-                handleLightChange("on", !device.sensors.light.on)
-              }
-              className={`px-3 py-1 rounded ${
+              onClick={() => handleLightChange("on", !device.sensors.light.on)}
+              className={`w-16 py-2 rounded-full text-sm font-semibold transition ${
                 device.sensors.light.on
-                  ? "bg-green-400 text-white"
-                  : "bg-gray-300"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-300 text-gray-700"
               }`}
             >
               {device.sensors.light.on ? "ON" : "OFF"}
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-2">
-            <label>밝기(1~5):</label>
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={device.sensors.light.brightness}
-              onChange={(e) =>
-                handleLightChange("brightness", Number(e.target.value))
-              }
-            />
-            <span>{device.sensors.light.brightness}</span>
+          {/* 밝기 슬라이더 */}
+          <div className="mb-4">
+            <label className="block font-medium mb-2">밝기</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={device.sensors.light.brightness}
+                onChange={(e) =>
+                  handleLightChange("brightness", Number(e.target.value))
+                }
+                className="w-full accent-green-500"
+              />
+              <span className="w-8 text-center font-semibold">
+                {device.sensors.light.brightness}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label>지속시간(10~18h):</label>
-            <input
-              type="number"
-              min="10"
-              max="18"
-              value={device.sensors.light.duration}
-              onChange={(e) =>
-                handleLightChange("duration", Number(e.target.value))
-              }
-              className="w-16 border px-1"
-            />
-            <span>시간</span>
+          {/* 지속시간 입력 */}
+          <div>
+            <label className="block font-medium mb-2">지속시간</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="10"
+                max="18"
+                value={device.sensors.light.duration}
+                onChange={(e) =>
+                  handleLightChange("duration", Number(e.target.value))
+                }
+                className="w-20 border rounded px-2 py-1"
+              />
+              <span className="text-gray-600">시간</span>
+            </div>
           </div>
         </div>
       )}

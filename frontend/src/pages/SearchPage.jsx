@@ -9,7 +9,7 @@ export default function SearchPage() {
 
   const tabs = useMemo(
     () => [
-      { key: "threads", label: "스레드" },
+      { key: "planti", label: "플랜티" },
       { key: "replies", label: "답글" },
       { key: "media", label: "미디어" },
       { key: "reposts", label: "리포스트" },
@@ -18,7 +18,7 @@ export default function SearchPage() {
   );
 
   const [profile, setProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState("threads");
+  const [activeTab, setActiveTab] = useState("planti");
   const [items, setItems] = useState([]);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
