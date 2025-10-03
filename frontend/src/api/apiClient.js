@@ -19,15 +19,21 @@ apiClient.interceptors.request.use(config => {
 });
 
 // 401 Unauthorized 오류 발생 시 자동으로 로그아웃 처리
-apiClient.interceptors.response.use(response => response, error => {
-    if (error.response && error.response.status === 401) {
-        localStorage.removeItem('accessToken');
-        if (window.location.pathname !== '/login') {
-            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-            window.location.href = '/login';
+apiClient.interceptors.response.use(
+    response => response, 
+    error => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('accessToken');
+            
+            // ✅ 추가: 로그인 관련 페이지에서는 리다이렉트하지 않음
+            const authPages = ['/auth/login', '/auth/signup', '/auth/loginchoice', '/'];
+            if (!authPages.includes(window.location.pathname)) {
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                window.location.href = '/auth/login';
+            }
         }
+        return Promise.reject(error);
     }
-    return Promise.reject(error);
-});
+);
 
 export default apiClient;
