@@ -31,10 +31,10 @@ function LoginPage() {
 
       const data = await res.json();
       localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      //localStorage.setItem("refreshToken", data.refreshToken);
 
       // 로그인 성공 후 원하는 페이지로 이동 가능
-      navigate("/dashboard"); 
+      navigate("/main"); 
     } catch (err) {
       console.error("로그인 실패:", err); 
       setError("아이디 또는 비밀번호가 틀렸습니다.");
