@@ -1,59 +1,51 @@
 // src/pages/NogrowPage1.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { devices } from "../data/MockDevices"; // ⚠️ 현재는 mock, 나중에 백엔드 연동
 import PlantSearchModal from "../components/PlantSearchModal";
 import Layout from "../components/Layout";
+import { createPlant } from "../api/plant";
 
 function NogrowPage1() {
-  const { id } = useParams();
+  const { id: serialNumber } = useParams();
   const navigate = useNavigate();
-  const [selectedPlant, setSelectedPlant] = useState(null);
+  const [selectedPlant, setSelectedPlant] = useState(null); // 사용자가 '식물 찾기'로 선택한 식물 품종 정보
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localDevices, setLocalDevices] = useState([]);
 
-  // ✅ localStorage에서 기기 불러오기
-  useEffect(() => {
-    const savedDevices = JSON.parse(localStorage.getItem("devices")) || devices;
-    setLocalDevices(savedDevices);
-  }, []);
+  // 식물 등록 처리 함수를 백엔드 API와 연동합니다.
+  const handleRegister = async () => {
+    if (!selectedPlant) {
+      alert("먼저 등록할 식물을 찾아 선택해주세요.");
+      return;
+    }
 
-  // ✅ 식물 등록 처리
-  const handleRegister = () => {
-    const deviceId = Number(id);
-    const deviceIndex = localDevices.findIndex((d) => d.id === deviceId);
+    const plantName = prompt(`'${selectedPlant.name}'의 애칭을 지어주세요:`);
+    if (!plantName || !plantName.trim()) {
+      alert("식물의 애칭을 입력해야 합니다.");
+      return;
+    }
 
-    if (deviceIndex !== -1 && selectedPlant) {
-      // 기기 정보 업데이트
-      const updatedDevice = {
-        ...localDevices[deviceIndex],
-        plantId: selectedPlant.id,
-        plant: selectedPlant.name,
-        category: selectedPlant.category,
-        imageUrl: selectedPlant.imageUrl,
-        plantedAt: new Date().toISOString(), // ISO format → GrowPage에서 일수 계산
-        sensors: {
-          temperature: 25 + Math.floor(Math.random() * 5),
-          humidity: 50 + Math.floor(Math.random() * 20),
-          soilMoisture: 40 + Math.floor(Math.random() * 20),
-          light: { on: true, brightness: 3, duration: 12 },
-        },
-      };
+    // PlantRequestDto 형식에 맞춰 백엔드로 보낼 데이터를 구성합니다.
+    const plantData = {
+      name: plantName,               // 사용자가 입력한 식물 애칭
+      species: selectedPlant.name,   // 찾기에서 선택한 식물 품종
+      plantedAt: new Date().toISOString(), // 심은 날짜는 현재 시간으로 설정
+      stage: 'SEED',                 // 초기 단계는 'SEED'로 고정
+      serialNumber: serialNumber     // URL 파라미터에서 가져온 기기 시리얼 번호
+    };
 
-      // local state 업데이트
-      const updatedDevices = [...localDevices];
-      updatedDevices[deviceIndex] = updatedDevice;
-      setLocalDevices(updatedDevices);
-
-      // localStorage 반영
-      localStorage.setItem("devices", JSON.stringify(updatedDevices));
-
-      // GrowPage로 이동
-      navigate(`/main/device/${deviceId}/manage`);
-    } else {
-      alert("기기를 찾을 수 없거나 식물이 선택되지 않았습니다.");
+    try {
+      // API 함수를 호출하여 식물을 생성합니다.
+      await createPlant(plantData);
+      alert(`'${plantName}'이(가) 성공적으로 등록되었습니다!`);
+      // 등록 성공 후, 해당 식물의 관리 페이지로 이동합니다.
+      // plantId를 백엔드에서 반환받아 사용해야 하지만, 우선 메인 페이지로 이동하여 리프레시되도록 합니다.
+      navigate(`/main`);
+    } catch (error) {
+      console.error("식물 등록 실패:", error);
+      alert(error.response?.data || "식물 등록에 실패했습니다.");
     }
   };
+
 
   return (
     <Layout>
@@ -70,6 +62,7 @@ function NogrowPage1() {
             className="flex-1 border p-2 rounded cursor-pointer"
             onClick={() => setIsModalOpen(true)}
           >
+            {/* 사용자가 식물을 선택하면 해당 식물 이름(품종)이 여기에 표시됩니다. */}
             {selectedPlant ? selectedPlant.name : "식물 찾기"}
           </div>
           <button
