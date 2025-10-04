@@ -54,8 +54,7 @@ function App() {
           {/* IoT 관련 */}
           <Route path="/main/device/:id/nogrow" element={<NogrowPage />} />
           <Route path="/main/device/:id/nogrow/new" element={<NogrowPage1 />} />
-          <Route path="/main/device/:id/manage" element={<GrowPage />} />
-
+          <Route path="/main/device/:serialNumber/manage" element={<GrowPage />} />
 
 
 

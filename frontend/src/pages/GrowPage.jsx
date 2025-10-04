@@ -1,160 +1,177 @@
-// src/pages/GrowPage.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import plants from "../data/plants.js";
-import { devices as mockDevices } from "../data/MockDevices.js";
-import { fetchDevice, postDeviceControl } from "../services/DeviceService.js";
+import apiClient from "../api/apiClient";
 
 function GrowPage() {
-  const { id } = useParams();
-  const deviceId = Number(id);
-
+  const { serialNumber } = useParams();
   const [device, setDevice] = useState(null);
-  const pollingRef = useRef(null);
+  const [plant, setPlant] = useState(null);
+  const [sensorData, setSensorData] = useState(null);
+  const [ledSettings, setLedSettings] = useState({ 
+    intensity: 1, 
+    startTime: "00:00", 
+    endTime: "00:00" 
+  });
+  const [isLedOn, setIsLedOn] = useState(false);
 
-  // ✅ 일차 계산
-  const getDayCount = (date) => {
-    if (!date) return null;
-    const start = new Date(date);
-    if (isNaN(start)) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    return Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-  };
-
-  // ✅ 온도 상태 판정
-  const getTempStatus = (plant, temp) => {
-    if (!plant || temp == null) return "-";
-    if (temp < plant.recommended.tempMin) return "❄️ 추움";
-    if (temp > plant.recommended.tempMax) return "🔥 더움";
-    return "✅ 적정";
-  };
-
-  // ✅ 초기 로드 및 폴링
+  // ✅ 추가: 초기 데이터 로드 (페이지 진입 시 1회만)
   useEffect(() => {
-    let mounted = true;
+    if (!serialNumber) return;
+    loadInitialData();
+  }, [serialNumber]);
 
-    const loadDevice = async () => {
-      let dev = await fetchDevice(deviceId);
-      if (!dev) {
-        dev = mockDevices.find((d) => d.id === deviceId);
+  // ✅ 추가: 센서 데이터만 주기적으로 갱신
+  useEffect(() => {
+    if (!serialNumber) return;
+    const interval = setInterval(loadSensorData, 10000);
+    return () => clearInterval(interval);
+  }, [serialNumber]);
+
+  // ✅ 추가: 초기 데이터 로드 (기기, 식물, 센서, LED 모두)
+  const loadInitialData = async () => {
+    try {
+      const deviceRes = await apiClient.get(`/api/devices/${serialNumber}`);
+      setDevice(deviceRes.data);
+
+      if (deviceRes.data.plant) {
+        const plantRes = await apiClient.get(`/api/plants/${deviceRes.data.plant.id}`);
+        setPlant(plantRes.data);
       }
-      if (mounted) setDevice(dev || null);
-    };
 
-    loadDevice();
-    pollingRef.current = setInterval(loadDevice, 10000);
+      // 센서 데이터
+      const sensorRes = await apiClient.get(`/api/devices/${serialNumber}/sensors`);
+      setSensorData(sensorRes.data);
 
-    return () => {
-      mounted = false;
-      clearInterval(pollingRef.current);
-    };
-  }, [deviceId]);
-
-  if (!device) return <p className="p-4">기기를 찾을 수 없습니다.</p>;
-
-  const plantInfo = device.plant ? plants[device.plant] : null;
-  const dayCount = getDayCount(device.plantedAt);
-
-  // ✅ 조명 제어 이벤트
-  const handleLightChange = async (key, value) => {
-    if (!device.sensors.light) return;
-    const updated = {
-      ...device,
-      sensors: {
-        ...device.sensors,
-        light: { ...device.sensors.light, [key]: value },
-      },
-    };
-    setDevice(updated);
-    await postDeviceControl(deviceId, { light: updated.sensors.light });
+      // LED 설정 (초기 1회만)
+      const ledRes = await apiClient.get(`/api/leds/${serialNumber}`);
+      console.log("LED 데이터 (초기):", ledRes.data);
+      
+      setLedSettings({
+        intensity: ledRes.data.intensity || 1,
+        startTime: ledRes.data.startTime || "00:00",
+        endTime: ledRes.data.endTime || "00:00"
+      });
+      setIsLedOn(ledRes.data.intensity > 0);
+      
+    } catch (error) {
+      console.error("초기 데이터 로드 실패:", error);
+    }
   };
+
+  // ✅ 추가: 센서 데이터만 갱신
+  const loadSensorData = async () => {
+    try {
+      const sensorRes = await apiClient.get(`/api/devices/${serialNumber}/sensors`);
+      setSensorData(sensorRes.data);
+    } catch (error) {
+      console.error("센서 데이터 로드 실패:", error);
+    }
+  };
+
+  const handleLedUpdate = async () => {
+    try {
+      const payload = {
+        intensity: isLedOn ? ledSettings.intensity : 0,
+        startTime: ledSettings.startTime,
+        endTime: ledSettings.endTime
+      };
+
+      console.log("LED 설정 전송:", payload);
+      
+      const response = await apiClient.put(`/api/leds/${serialNumber}`, payload);
+      console.log("응답:", response.data);
+      
+      alert("LED 설정이 저장되었습니다.");
+      // ✅ 수정: LED 설정은 DB에서 다시 불러오지 않음 (사용자가 설정한 값 유지)
+    } catch (error) {
+      console.error("LED 설정 실패:", error.response?.data || error);
+      alert("LED 설정에 실패했습니다: " + (error.response?.data || error.message));
+    }
+  };
+
+  if (!serialNumber) {
+    return <div className="p-4">오류: serialNumber가 없습니다.</div>;
+  }
+
+  if (!device || !plant) {
+    return <p className="p-4">로딩 중...</p>;
+  }
+
+  const dayCount = plant.plantedAt 
+    ? Math.floor((new Date() - new Date(plant.plantedAt)) / (1000 * 60 * 60 * 24)) + 1 
+    : null;
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      {/* 상단 제목 */}
       <h2 className="text-xl font-bold mb-2">
-        {plantInfo ? `${plantInfo.name} ${dayCount ?? "-"}일차` : "식물 미등록"}
+        {plant.name} {dayCount ?? "-"}일차
       </h2>
 
-      {plantInfo && (
-        <img
-          src={plantInfo.defaultImage || plantInfo.image}
-          alt={plantInfo.name}
-          className="w-32 h-32 mb-4 object-cover rounded"
-        />
-      )}
-
-      {/* 센서 데이터 */}
-      <div className="space-y-2 mb-6">
-        <p>
-          🌡️ 온도: {device.sensors.temperature ?? "-"}°C (
-          {getTempStatus(plantInfo, device.sensors.temperature)})
-        </p>
-        <p>💧 습도: {device.sensors.humidity ?? "-"}%</p>
-        <p>🌱 토양 수분: {device.sensors.soilMoisture ?? "-"}%</p>
+      <div className="space-y-2 mb-6 p-4 bg-gray-100 rounded-lg">
+        <p>🌡️ 온도: {sensorData?.temperature?.toFixed(1) ?? "-"}°C</p>
+        <p>💧 습도: {sensorData?.humidity?.toFixed(1) ?? "-"}%</p>
       </div>
 
-      {/* ✅ 조명 제어 UI - 피그마 디자인 반영 */}
-      {device.sensors.light && (
-        <div className="p-4 bg-white rounded-2xl shadow-md border border-gray-200">
-          <h3 className="text-lg font-bold mb-4">💡 조명 제어</h3>
+      <div className="p-4 bg-white rounded-2xl shadow-md border">
+        <h3 className="text-lg font-bold mb-4">💡 조명 제어</h3>
 
-          {/* ON/OFF 토글 버튼 */}
-          <div className="flex justify-between items-center mb-4">
-            <span className="font-medium">상태</span>
-            <button
-              onClick={() => handleLightChange("on", !device.sensors.light.on)}
-              className={`w-16 py-2 rounded-full text-sm font-semibold transition ${
-                device.sensors.light.on
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-300 text-gray-700"
-              }`}
-            >
-              {device.sensors.light.on ? "ON" : "OFF"}
-            </button>
-          </div>
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-medium">상태</span>
+          <button
+            onClick={() => setIsLedOn(!isLedOn)}
+            className={`w-16 py-2 rounded-full text-sm font-semibold transition ${
+              isLedOn ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700"
+            }`}
+          >
+            {isLedOn ? "ON" : "OFF"}
+          </button>
+        </div>
 
-          {/* 밝기 슬라이더 */}
+        {isLedOn && (
           <div className="mb-4">
-            <label className="block font-medium mb-2">밝기</label>
+            <label className="block font-medium mb-2">밝기 (1~5단계)</label>
             <div className="flex items-center gap-3">
               <input
                 type="range"
                 min="1"
                 max="5"
-                value={device.sensors.light.brightness}
-                onChange={(e) =>
-                  handleLightChange("brightness", Number(e.target.value))
-                }
+                value={ledSettings.intensity}
+                onChange={(e) => setLedSettings({...ledSettings, intensity: Number(e.target.value)})}
                 className="w-full accent-green-500"
               />
-              <span className="w-8 text-center font-semibold">
-                {device.sensors.light.brightness}
-              </span>
+              <span className="w-8 text-center font-semibold">{ledSettings.intensity}</span>
             </div>
           </div>
+        )}
 
-          {/* 지속시간 입력 */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block font-medium mb-2">지속시간</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="10"
-                max="18"
-                value={device.sensors.light.duration}
-                onChange={(e) =>
-                  handleLightChange("duration", Number(e.target.value))
-                }
-                className="w-20 border rounded px-2 py-1"
-              />
-              <span className="text-gray-600">시간</span>
-            </div>
+            <label className="block font-medium mb-2">시작 시간</label>
+            <input
+              type="time"
+              value={ledSettings.startTime}
+              onChange={(e) => setLedSettings({...ledSettings, startTime: e.target.value})}
+              className="w-full border rounded px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-2">종료 시간</label>
+            <input
+              type="time"
+              value={ledSettings.endTime}
+              onChange={(e) => setLedSettings({...ledSettings, endTime: e.target.value})}
+              className="w-full border rounded px-2 py-1"
+            />
           </div>
         </div>
-      )}
+
+        <button
+          onClick={handleLedUpdate}
+          className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
+        >
+          설정 저장
+        </button>
+      </div>
     </div>
   );
 }
