@@ -78,15 +78,23 @@ function MainPage() {
     }
   };
 
+  // 기기 삭제 함수 수정 - 완전 삭제가 아닌 소유권 해제
   const deleteDevice = async (serialNumber) => {
-    if (!window.confirm("정말 이 기기를 삭제(소유권 포기)하시겠습니까?\n연결된 식물 정보도 함께 삭제됩니다.")) return;
+    if (!window.confirm(
+      "정말 이 기기의 연결을 해제하시겠습니까?\n" +
+      "• 기기와의 연결만 해제되며, 기기 자체는 삭제되지 않습니다.\n" +
+      "• 연결된 식물 정보는 삭제됩니다.\n" +
+      "• 다른 사용자가 이 기기를 다시 등록할 수 있습니다."
+    )) return;
+    
     try {
       await apiClient.delete(`/api/devices/${serialNumber}`);
+      // 화면에서 기기 제거
       setDevices(devices.filter(d => d.serialNumber !== serialNumber));
-      alert("기기가 삭제되었습니다.");
+      alert("기기 연결이 해제되었습니다.\n시리얼 번호를 알고 있는 다른 사용자가 이 기기를 등록할 수 있습니다.");
     } catch (error) {
-      console.error("삭제 실패:", error);
-      alert("삭제에 실패했습니다.");
+      console.error("연결 해제 실패:", error);
+      alert("연결 해제에 실패했습니다.");
     }
   };
 
@@ -360,7 +368,7 @@ function MainPage() {
             onMouseEnter={e => e.target.style.backgroundColor = '#fde047'}
             onMouseLeave={e => e.target.style.backgroundColor = '#fef08a'}
           >
-            <span style={{ fontSize: '24px', marginBottom: '4px' }}>📔</span>
+            <span style={{ fontSize: '24px', marginBottom: '4px' }}>📓</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Diary</span>
           </button>
 
