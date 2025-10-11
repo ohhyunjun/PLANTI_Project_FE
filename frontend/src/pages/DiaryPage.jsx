@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Trash2, Edit, Image, Film, FileText, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, Edit, Image, Film, FileText, X, Bell, Home, Users, Heart } from "lucide-react";
 
 function DiaryPage() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date(2025, 0, 1));
   const [selectedDate, setSelectedDate] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -120,6 +122,14 @@ function DiaryPage() {
     setEditingEvent(null);
   };
 
+  const openAddModal = () => {
+    setEditingEvent(null);
+    setPreviewUrls([]);
+    setUploadedFiles([]);
+    setFormData({ name: '', content: '', plant: '' });
+    setShowModal(true);
+  };
+
   const plants = [
     { name: "Rose", color: "rgb(248 113 113)" },
     { name: "Lily", color: "rgb(250 204 21)" },
@@ -141,7 +151,8 @@ function DiaryPage() {
       maxWidth: '1280px',
       margin: '0 auto',
       backgroundColor: 'white',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      paddingBottom: '100px'
     },
     header: {
       display: 'flex',
@@ -203,7 +214,7 @@ function DiaryPage() {
     },
     fab: {
       position: 'fixed',
-      bottom: '24px',
+      bottom: '90px',
       right: '24px',
       width: '56px',
       height: '56px',
@@ -217,6 +228,22 @@ function DiaryPage() {
       cursor: 'pointer',
       border: 'none',
       transition: 'transform 0.2s, background-color 0.2s'
+    },
+    addButton: {
+      marginTop: '16px',
+      width: '56px',
+      height: '56px',
+      backgroundColor: '#10b981',
+      color: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '50%',
+      boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+      cursor: 'pointer',
+      border: 'none',
+      transition: 'transform 0.2s, background-color 0.2s',
+      margin: '16px auto 0'
     },
     modalOverlay: {
       position: 'fixed',
@@ -246,6 +273,8 @@ function DiaryPage() {
       backgroundColor: 'white'
     }
   };
+
+  const hasEvents = selectedDate && events[formatDate(selectedDate)]?.length > 0;
 
   return (
     <div style={styles.container}>
@@ -300,7 +329,7 @@ function DiaryPage() {
                     formatDate(selectedDate);
                   
                   const dateKey = day ? formatDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day)) : null;
-                  const hasEvents = dateKey && events[dateKey]?.length > 0;
+                  const hasDateEvents = dateKey && events[dateKey]?.length > 0;
 
                   return (
                     <td 
@@ -321,7 +350,7 @@ function DiaryPage() {
                           }}>
                             {day}
                           </div>
-                          {hasEvents && (
+                          {hasDateEvents && (
                             <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                               {events[dateKey].slice(0, 3).map((_, idx) => (
                                 <div key={idx} style={styles.eventDot} />
@@ -344,7 +373,7 @@ function DiaryPage() {
           <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
             {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 기록
           </h3>
-          {events[formatDate(selectedDate)]?.length > 0 ? (
+          {hasEvents ? (
             <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
               {events[formatDate(selectedDate)].map((event, idx) => (
                 <div key={idx} style={styles.card}>
@@ -402,20 +431,23 @@ function DiaryPage() {
               <FileText size={48} color="#d1d5db" style={{ margin: '0 auto 12px' }} />
               <p style={{ color: '#6b7280' }}>아직 기록이 없습니다.</p>
               <p style={{ fontSize: '14px', color: '#9ca3af', marginTop: '4px' }}>+ 버튼을 눌러 첫 기록을 추가해보세요!</p>
+              
+              <button
+                onClick={openAddModal}
+                style={styles.addButton}
+                onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+                onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+              >
+                <Plus size={28} />
+              </button>
             </div>
           )}
         </div>
       )}
 
-      {selectedDate && (
+      {selectedDate && hasEvents && (
         <button
-          onClick={() => {
-            setEditingEvent(null);
-            setPreviewUrls([]);
-            setUploadedFiles([]);
-            setFormData({ name: '', content: '', plant: '' });
-            setShowModal(true);
-          }}
+          onClick={openAddModal}
           style={styles.fab}
           onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
           onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
@@ -424,7 +456,6 @@ function DiaryPage() {
         </button>
       )}
 
-      {/* Custom Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -533,6 +564,97 @@ function DiaryPage() {
           </div>
         </div>
       )}
+
+      {/* 하단 네비게이션 바 */}
+      <div style={{ 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        backgroundColor: 'white', 
+        borderTop: '1px solid #e5e7eb',
+        boxShadow: '0 -1px 3px 0 rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-around', 
+          padding: '0.75rem 1rem',
+          maxWidth: '28rem',
+          margin: '0 auto'
+        }}>
+          <button
+            onClick={() => navigate('/main')}
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              color: '#6b7280',
+              minWidth: '60px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Home size={24} strokeWidth={2} />
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>홈</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/community')}
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              color: '#6b7280',
+              minWidth: '60px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Users size={24} strokeWidth={2} />
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>커뮤니티</span>
+          </button>
+          
+          <button
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              color: '#6b7280',
+              minWidth: '60px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Heart size={24} strokeWidth={2} />
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>좋아요</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/setting')}
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              color: '#6b7280',
+              minWidth: '60px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Bell size={24} strokeWidth={2} />
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>알림</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
