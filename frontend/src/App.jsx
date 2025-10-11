@@ -18,6 +18,7 @@ import NogrowPage1 from "./pages/NogrowPage1";
 import GrowPage from "./pages/GrowPage";
 import CommunityMyPage from "./pages/CommunityMyPage";
 import "./App.css";
+import './index.css'
 
 import { PostProvider } from "./context/PostContext"; // ✅ 커뮤니티 context
 
@@ -65,4 +66,3 @@ function App() {
 }
 
 export default App;
-
