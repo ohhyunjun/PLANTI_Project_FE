@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
 import { registerDevice } from "../api/device";
 import { updatePlant } from "../api/plant";
 import apiClient from "../api/apiClient";
@@ -96,7 +95,7 @@ function MainPage() {
   };
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* ✅ 수정: Planti 버튼을 상단에 별도 배치 */}
       <div className="p-4">
         <button
@@ -232,7 +231,7 @@ function MainPage() {
           </div>
         )}
       </div>
-    </Layout>
+    </div>
   );
 }
 
