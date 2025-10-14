@@ -9,6 +9,7 @@ import CommunityStartPage from "./pages/CommunityStartPage";
 import CommunityFollowingPage from "./pages/CommunityFollowingPage";
 import CommunityExplorePage from "./pages/CommunityExplorePage";
 import CommunityCreatePage from "./pages/CommunityCreatePage"; // ✅ 커뮤니티 글쓰기
+import CommunityPostDetailPage from "./pages/CommunityPostDetailPage";
 import SearchPage from "./pages/SearchPage";
 import SettingPage from "./pages/SettingPage";
 import AiPhotoStartPage from "./pages/AiPhotoStartPage";
@@ -49,6 +50,7 @@ function App() {
           <Route path="/main/community/following" element={<CommunityFollowingPage />} />
           <Route path="/main/community/explore" element={<CommunityExplorePage />} />
           <Route path="/main/community/search" element={<SearchPage />} />
+          <Route path="/main/community/post/:postId" element={<CommunityPostDetailPage />} />
           <Route path="/community/create" element={<CommunityCreatePage />} />
           <Route path="/community/mypage" element={<CommunityMyPage />} />
 
