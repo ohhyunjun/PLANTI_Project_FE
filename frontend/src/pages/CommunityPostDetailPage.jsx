@@ -1,4 +1,4 @@
-// ✅ [수정] useCallback 훅을 react에서 추가로 import 합니다.
+// useCallback 훅을 react에서 추가로 import 합니다.
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getPostById, createComment, deletePost, updatePost } from "../api/community";
@@ -9,7 +9,7 @@ const Icon = ({ name, className = "" }) => {
 };
 
 function CommunityPostDetailPage() {
-    const { postId } = useParams();
+   const { postId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     
@@ -21,8 +21,13 @@ function CommunityPostDetailPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState("");
     const [editedContent, setEditedContent] = useState("");
+    
+    // 이미지 편집 관련 상태
+    const [editImageFile, setEditImageFile] = useState(null);
+    const [editImagePreviewUrl, setEditImagePreviewUrl] = useState(null);
+    const [deleteExistingImage, setDeleteExistingImage] = useState(false);
 
-    // ✅ [수정] fetchPost 함수를 useCallback으로 감싸서 불필요한 재성성을 방지합니다.
+    // fetchPost 함수를 useCallback으로 감싸서 불필요한 재성성을 방지합니다.
     const fetchPost = useCallback(async () => {
         try {
             setLoading(true);
@@ -45,7 +50,7 @@ function CommunityPostDetailPage() {
         }
     }, [postId, location.state]); // 함수가 의존하는 값들을 배열에 명시합니다.
 
-    // ✅ [수정] useEffect의 의존성 배열에 useCallback으로 감싼 fetchPost 함수를 추가합니다.
+    // useEffect의 의존성 배열에 useCallback으로 감싼 fetchPost 함수를 추가합니다.
     useEffect(() => {
         fetchPost();
     }, [fetchPost]);
@@ -77,19 +82,89 @@ function CommunityPostDetailPage() {
         }
     };
 
+    // 편집 모드 시작 시 기존 이미지 미리보기 설정
+    const handleStartEdit = () => {
+        setIsEditing(true);
+        setDeleteExistingImage(false);
+        setEditImageFile(null);
+        setEditImagePreviewUrl(null);
+    };
+
     const handleCancelEdit = () => {
         setIsEditing(false);
         setEditedTitle(post.title || "");
         setEditedContent(post.content);
+        // 이미지 편집 상태 초기화
+        setEditImageFile(null);
+        if (editImagePreviewUrl) {
+            URL.revokeObjectURL(editImagePreviewUrl);
+        }
+        setEditImagePreviewUrl(null);
+        setDeleteExistingImage(false);
     };
 
+    //  이미지 선택 핸들러
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (editImagePreviewUrl) {
+                URL.revokeObjectURL(editImagePreviewUrl);
+            }
+            setEditImageFile(file);
+            setEditImagePreviewUrl(URL.createObjectURL(file));
+            setDeleteExistingImage(false); // 새 이미지 선택 시 삭제 플래그 해제
+        }
+    };
+
+    // 이미지 삭제 핸들러
+    const handleImageRemove = () => {
+        if (editImagePreviewUrl) {
+            URL.revokeObjectURL(editImagePreviewUrl);
+        }
+        setEditImageFile(null);
+        setEditImagePreviewUrl(null);
+        
+        // input file 초기화
+        const fileInput = document.getElementById('editFileInput');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // 기존 이미지가 있었다면 삭제 플래그 설정
+        if (post.files && post.files.length > 0) {
+            setDeleteExistingImage(true);
+        }
+    };
+
+
+
     const handleUpdatePost = async () => {
-    await updatePost(postId, { title: editedTitle, content: editedContent });
-    setIsEditing(false);        // ✅ 편집 모드 종료
-    await fetchPost();           // ✅ 게시글 새로고침
-    alert("게시글이 성공적으로 수정되었습니다.");
-    // ✅ 상세 페이지에 머물러서 수정/삭제 버튼 표시
-};
+        try {
+            const updateData = {
+                title: editedTitle,
+                content: editedContent,
+                file: editImageFile,
+                deleteFile: deleteExistingImage
+            };
+            
+            await updatePost(postId, updateData);
+            setIsEditing(false);
+            
+            // ✅ [추가] 이미지 상태 초기화
+            if (editImagePreviewUrl) {
+                URL.revokeObjectURL(editImagePreviewUrl);
+            }
+            setEditImageFile(null);
+            setEditImagePreviewUrl(null);
+            setDeleteExistingImage(false);
+            
+            await fetchPost();
+            alert("게시글이 성공적으로 수정되었습니다.");
+        } catch (err) {
+            console.error("게시글 수정 실패:", err);
+            alert("게시글 수정에 실패했습니다.");
+        }
+    };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-green-500">🌱 게시글을 불러오는 중...</div>;
     if (error || !post) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-500">{error}</div>;
@@ -113,7 +188,7 @@ function CommunityPostDetailPage() {
                         <button onClick={handleUpdatePost} className="text-sm font-semibold text-green-500 hover:text-green-400">저장</button>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} className="text-sm font-semibold text-gray-200 hover:text-white">수정</button>
+                            <button onClick={handleStartEdit} className="text-sm font-semibold text-gray-200 hover:text-white">수정</button>
                             <button onClick={handleDeletePost} className="text-sm font-semibold text-red-500 hover:text-red-400">삭제</button>
                         </>
                     )}
@@ -144,6 +219,69 @@ function CommunityPostDetailPage() {
                             placeholder="내용을 입력하세요"
                             className="w-full h-32 bg-gray-800 text-gray-200 p-2 border border-gray-600 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
+
+                        {/* ✅ [추가] 이미지 편집 영역 */}
+                        <div className="space-y-2">
+                            {/* 새로 선택한 이미지 미리보기 */}
+                            {editImagePreviewUrl && (
+                                <div className="relative">
+                                    <img 
+                                        src={editImagePreviewUrl} 
+                                        alt="새 이미지 미리보기" 
+                                        className="w-full rounded-lg"
+                                        style={{ maxHeight: "300px", objectFit: "cover" }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleImageRemove}
+                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* 기존 이미지 (삭제되지 않은 경우에만 표시) */}
+                            {!editImagePreviewUrl && !deleteExistingImage && post.files && post.files.length > 0 && (
+                                <div className="relative">
+                                    <img 
+                                        src={post.files[0].fileUrl} 
+                                        alt="현재 이미지" 
+                                        className="w-full rounded-lg"
+                                        style={{ maxHeight: "300px", objectFit: "cover" }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleImageRemove}
+                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* 이미지가 삭제된 상태 표시 */}
+                            {!editImagePreviewUrl && deleteExistingImage && (
+                                <div className="text-center py-4 text-gray-500 text-sm bg-gray-800 rounded-lg">
+                                    이미지가 삭제됩니다
+                                </div>
+                            )}
+                            
+                            {/* 이미지 추가 버튼 */}
+                            <label className="cursor-pointer text-center py-2 px-4 bg-gray-800 text-green-400 font-semibold rounded-lg hover:bg-gray-700 transition-colors inline-block">
+                                <span className="flex items-center justify-center space-x-2">
+                                    <span className="text-xl">📷</span>
+                                    <span>{editImagePreviewUrl || (post.files && post.files.length > 0 && !deleteExistingImage) ? "이미지 변경" : "이미지 추가"}</span>
+                                </span>
+                                <input 
+                                    id="editFileInput"
+                                    type="file" 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                    onChange={handleImageChange}
+                                />
+                            </label>
+                        </div>
                     </div>
                 ) : (
                     <>
