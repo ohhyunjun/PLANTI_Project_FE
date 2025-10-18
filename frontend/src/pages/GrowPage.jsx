@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { Bell, Home, Users, Heart } from "lucide-react";
 import apiClient from "../api/apiClient";
 
 function GrowPage() {
+  const navigate = useNavigate();
   const { serialNumber } = useParams();
+  
   const [device, setDevice] = useState(null);
   const [plant, setPlant] = useState(null);
   const [sensorData, setSensorData] = useState(null);
@@ -13,21 +16,20 @@ function GrowPage() {
     endTime: "00:00" 
   });
   const [isLedOn, setIsLedOn] = useState(false);
+  const [showLightingTime, setShowLightingTime] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ 추가: 초기 데이터 로드 (페이지 진입 시 1회만)
   useEffect(() => {
     if (!serialNumber) return;
     loadInitialData();
   }, [serialNumber]);
 
-  // ✅ 추가: 센서 데이터만 주기적으로 갱신
   useEffect(() => {
     if (!serialNumber) return;
     const interval = setInterval(loadSensorData, 10000);
     return () => clearInterval(interval);
   }, [serialNumber]);
 
-  // ✅ 추가: 초기 데이터 로드 (기기, 식물, 센서, LED 모두)
   const loadInitialData = async () => {
     try {
       const deviceRes = await apiClient.get(`/api/devices/${serialNumber}`);
@@ -38,11 +40,9 @@ function GrowPage() {
         setPlant(plantRes.data);
       }
 
-      // 센서 데이터
       const sensorRes = await apiClient.get(`/api/devices/${serialNumber}/sensors`);
       setSensorData(sensorRes.data);
 
-      // LED 설정 (초기 1회만)
       const ledRes = await apiClient.get(`/api/leds/${serialNumber}`);
       console.log("LED 데이터 (초기):", ledRes.data);
       
@@ -53,12 +53,13 @@ function GrowPage() {
       });
       setIsLedOn(ledRes.data.intensity > 0);
       
+      setLoading(false);
     } catch (error) {
       console.error("초기 데이터 로드 실패:", error);
+      setLoading(false);
     }
   };
 
-  // ✅ 추가: 센서 데이터만 갱신
   const loadSensorData = async () => {
     try {
       const sensorRes = await apiClient.get(`/api/devices/${serialNumber}/sensors`);
@@ -82,95 +83,540 @@ function GrowPage() {
       console.log("응답:", response.data);
       
       alert("LED 설정이 저장되었습니다.");
-      // ✅ 수정: LED 설정은 DB에서 다시 불러오지 않음 (사용자가 설정한 값 유지)
     } catch (error) {
       console.error("LED 설정 실패:", error.response?.data || error);
       alert("LED 설정에 실패했습니다: " + (error.response?.data || error.message));
     }
   };
 
-  if (!serialNumber) {
-    return <div className="p-4">오류: serialNumber가 없습니다.</div>;
+  const handleLedPowerToggle = () => {
+    setIsLedOn(!isLedOn);
+  };
+
+  const handleBrightnessChange = (level) => {
+    setLedSettings({...ledSettings, intensity: level});
+  };
+
+  const getDaysFromPlanting = () => {
+    if (!plant?.plantedAt) return 0;
+    const plantedDate = new Date(plant.plantedAt);
+    const today = new Date();
+    const diffTime = Math.abs(today - plantedDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        maxWidth: '412px',
+        margin: '0 auto',
+        backgroundColor: '#f9fafb',
+        display: 'flex',
+        flexDirection: 'column',
+        paddingBottom: '80px'
+      }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          로딩 중...
+        </div>
+      </div>
+    );
   }
 
   if (!device || !plant) {
-    return <p className="p-4">로딩 중...</p>;
+    return (
+      <div style={{
+        minHeight: '100vh',
+        maxWidth: '412px',
+        margin: '0 auto',
+        backgroundColor: '#f9fafb',
+        display: 'flex',
+        flexDirection: 'column',
+        paddingBottom: '80px'
+      }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          기기 정보를 불러올 수 없습니다.
+        </div>
+      </div>
+    );
   }
 
-  const dayCount = plant.plantedAt 
-    ? Math.floor((new Date() - new Date(plant.plantedAt)) / (1000 * 60 * 60 * 24)) + 1 
-    : null;
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      maxWidth: '412px',
+      margin: '0 auto',
+      backgroundColor: '#f9fafb',
+      display: 'flex',
+      flexDirection: 'column',
+      paddingBottom: '80px'
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px',
+      backgroundColor: 'white',
+      borderBottom: '1px solid #e5e7eb'
+    },
+    logo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '18px',
+      fontWeight: 'bold'
+    },
+    headerButtons: {
+      display: 'flex',
+      gap: '8px'
+    },
+    iconButton: {
+      padding: '8px',
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#6b7280',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    content: {
+      flex: 1,
+      overflowY: 'auto',
+      padding: '16px'
+    },
+    deviceTitle: {
+      fontSize: '20px',
+      fontWeight: 'bold',
+      marginBottom: '16px',
+      textAlign: 'center'
+    },
+    deviceImage: {
+      width: '100%',
+      height: '200px',
+      backgroundColor: '#e0f2e9',
+      borderRadius: '16px',
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      position: 'relative'
+    },
+    deviceImageInner: {
+      width: '80%',
+      height: '80%',
+      background: 'linear-gradient(to bottom, #8B7355 0%, #8B7355 50%, #3D2817 100%)',
+      borderRadius: '12px',
+      position: 'relative',
+      border: '3px solid #D4C5B9'
+    },
+    plantInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '12px',
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      marginBottom: '16px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    },
+    plantIcon: {
+      fontSize: '32px'
+    },
+    sensorSection: {
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      padding: '16px',
+      marginBottom: '16px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    },
+    sensorRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      marginBottom: '12px'
+    },
+    sensorIcon: {
+      fontSize: '24px'
+    },
+    lightingSection: {
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      padding: '16px',
+      marginBottom: '16px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      overflow: 'hidden',
+      transition: 'all 0.3s ease'
+    },
+    lightingHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      cursor: 'pointer',
+      padding: '4px 0',
+      marginBottom: '0'
+    },
+    lightingContent: {
+      maxHeight: showLightingTime ? '600px' : '0',
+      overflow: 'hidden',
+      transition: 'max-height 0.3s ease',
+      paddingTop: showLightingTime ? '12px' : '0'
+    },
+    toggleSwitch: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      marginBottom: '16px'
+    },
+    switch: {
+      width: '50px',
+      height: '28px',
+      backgroundColor: isLedOn ? '#10b981' : '#d1d5db',
+      borderRadius: '14px',
+      position: 'relative',
+      cursor: 'pointer',
+      transition: 'background-color 0.3s ease',
+      boxShadow: isLedOn ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none'
+    },
+    switchButton: {
+      width: '24px',
+      height: '24px',
+      backgroundColor: 'white',
+      borderRadius: '12px',
+      position: 'absolute',
+      top: '2px',
+      left: isLedOn ? '24px' : '2px',
+      transition: 'left 0.3s ease',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    switchLabel: {
+      fontSize: '10px',
+      fontWeight: 'bold',
+      color: isLedOn ? '#10b981' : '#9ca3af',
+      transition: 'color 0.3s ease'
+    },
+    brightnessButtons: {
+      display: 'flex',
+      gap: '8px',
+      marginBottom: '16px',
+      justifyContent: 'space-around'
+    },
+    brightnessButton: {
+      minWidth: '60px',
+      padding: '12px 8px',
+      borderRadius: '8px',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500',
+      transition: 'all 0.2s'
+    },
+    timeInputContainer: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '12px',
+      marginBottom: '16px'
+    },
+    timeInputWrapper: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px'
+    },
+    timeLabel: {
+      fontSize: '13px',
+      fontWeight: '500',
+      color: '#374151'
+    },
+    timeInput: {
+      width: '100%',
+      padding: '8px 8px',
+      border: '1px solid #d1d5db',
+      borderRadius: '8px',
+      fontSize: '13px',
+      color: '#374151',
+      backgroundColor: 'white',
+      outline: 'none',
+      cursor: 'pointer',
+      boxSizing: 'border-box',
+      fontFamily: 'inherit'
+    },
+    saveButton: {
+      width: '100%',
+      padding: '12px',
+      backgroundColor: '#10b981',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '16px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'background-color 0.2s'
+    },
+    navbar: {
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: 'white',
+      borderTop: '1px solid #e5e7eb',
+      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+    },
+    navContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      padding: '12px 16px',
+      maxWidth: '412px',
+      margin: '0 auto'
+    },
+    navButton: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+      minWidth: '60px',
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer'
+    }
+  };
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h2 className="text-xl font-bold mb-2">
-        {plant.name} {dayCount ?? "-"}일차
-      </h2>
-
-      <div className="space-y-2 mb-6 p-4 bg-gray-100 rounded-lg">
-        <p>🌡️ 온도: {sensorData?.temperature?.toFixed(1) ?? "-"}°C</p>
-        <p>💧 습도: {sensorData?.humidity?.toFixed(1) ?? "-"}%</p>
-      </div>
-
-      <div className="p-4 bg-white rounded-2xl shadow-md border">
-        <h3 className="text-lg font-bold mb-4">💡 조명 제어</h3>
-
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-medium">상태</span>
-          <button
-            onClick={() => setIsLedOn(!isLedOn)}
-            className={`w-16 py-2 rounded-full text-sm font-semibold transition ${
-              isLedOn ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700"
-            }`}
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div style={styles.logo}>
+          <span style={{ fontSize: '24px' }}>🌱</span>
+          <span>PLANTI</span>
+        </div>
+        <div style={styles.headerButtons}>
+          <button 
+            style={styles.iconButton}
+            onClick={() => navigate('/main/setting')}
           >
-            {isLedOn ? "ON" : "OFF"}
+            <Bell size={24} />
+          </button>
+          <button style={styles.iconButton}>
+            <span style={{ fontSize: '20px' }}>☰</span>
           </button>
         </div>
+      </div>
 
-        {isLedOn && (
-          <div className="mb-4">
-            <label className="block font-medium mb-2">밝기 (1~5단계)</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={ledSettings.intensity}
-                onChange={(e) => setLedSettings({...ledSettings, intensity: Number(e.target.value)})}
-                className="w-full accent-green-500"
-              />
-              <span className="w-8 text-center font-semibold">{ledSettings.intensity}</span>
-            </div>
-          </div>
-        )}
+      <div style={styles.content}>
+        <h2 style={styles.deviceTitle}>{device.deviceNickname}</h2>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block font-medium mb-2">시작 시간</label>
-            <input
-              type="time"
-              value={ledSettings.startTime}
-              onChange={(e) => setLedSettings({...ledSettings, startTime: e.target.value})}
-              className="w-full border rounded px-2 py-1"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-2">종료 시간</label>
-            <input
-              type="time"
-              value={ledSettings.endTime}
-              onChange={(e) => setLedSettings({...ledSettings, endTime: e.target.value})}
-              className="w-full border rounded px-2 py-1"
-            />
+        <div style={styles.deviceImage}>
+          <div style={styles.deviceImageInner}>
+            <div style={{
+              position: 'absolute',
+              top: '-10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '40px'
+            }}>🌱</div>
           </div>
         </div>
 
-        <button
-          onClick={handleLedUpdate}
-          className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
-        >
-          설정 저장
-        </button>
+        <div style={styles.plantInfo}>
+          <div style={styles.plantIcon}>🍅</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
+              {plant.species || plant.name}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+              {getDaysFromPlanting()}일차
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.sensorSection}>
+          <div style={styles.sensorRow}>
+            <span style={styles.sensorIcon}>🌡️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '16px', fontWeight: '600' }}>
+                온도: {sensorData?.temperature?.toFixed(1) ?? "-"}°C
+              </div>
+            </div>
+          </div>
+          <div style={{ ...styles.sensorRow, marginBottom: 0 }}>
+            <span style={styles.sensorIcon}>💧</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '16px', fontWeight: '600' }}>
+                습도: {sensorData?.humidity?.toFixed(1) ?? "-"}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.lightingSection}>
+          <div 
+            style={styles.lightingHeader}
+            onClick={() => setShowLightingTime(!showLightingTime)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>💡</span>
+              <span style={{ fontWeight: 'bold' }}>조명 시간</span>
+            </div>
+            <span style={{ fontSize: '18px', color: '#6b7280' }}>
+              {showLightingTime ? '▲' : '▶'}
+            </span>
+          </div>
+
+          <div style={styles.lightingContent}>
+            <div style={styles.toggleSwitch}>
+              <span style={{ 
+                fontSize: '14px', 
+                fontWeight: '600',
+                color: '#374151',
+                minWidth: '45px'
+              }}>
+                on/off
+              </span>
+              <div 
+                style={styles.switch}
+                onClick={handleLedPowerToggle}
+              >
+                <div style={styles.switchButton}>
+                  {isLedOn && (
+                    <span style={{ 
+                      fontSize: '8px', 
+                      fontWeight: 'bold',
+                      color: '#10b981' 
+                    }}>
+                      I
+                    </span>
+                  )}
+                </div>
+                <span style={{
+                  position: 'absolute',
+                  left: isLedOn ? '6px' : 'auto',
+                  right: isLedOn ? 'auto' : '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  userSelect: 'none'
+                }}>
+                  {isLedOn ? 'ON' : 'OFF'}
+                </span>
+              </div>
+              <span style={styles.switchLabel}>
+                {isLedOn ? 'ON' : 'OFF'}
+              </span>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '8px' 
+              }}>
+                <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                  조명 밝기
+                </span>
+                {isLedOn && (
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#10b981' }}>
+                    {ledSettings.intensity}단계
+                  </span>
+                )}
+              </div>
+              <div style={styles.brightnessButtons}>
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => handleBrightnessChange(level)}
+                    style={{
+                      ...styles.brightnessButton,
+                      backgroundColor: ledSettings.intensity === level ? '#10b981' : '#f3f4f6',
+                      color: ledSettings.intensity === level ? 'white' : '#6b7280'
+                    }}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              {isLedOn && (
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: '#6b7280',
+                  marginTop: '4px'
+                }}>
+                  조명이 적당해요. 식물이 잘 자라요.
+                </div>
+              )}
+            </div>
+
+            {/* ✅ 개선된 시간 입력 부분 */}
+            <div style={styles.timeInputContainer}>
+              <div style={styles.timeInputWrapper}>
+                <label style={styles.timeLabel}>시작 시간</label>
+                <input
+                  type="time"
+                  value={ledSettings.startTime}
+                  onChange={(e) => setLedSettings({...ledSettings, startTime: e.target.value})}
+                  style={styles.timeInput}
+                />
+              </div>
+              <div style={styles.timeInputWrapper}>
+                <label style={styles.timeLabel}>종료 시간</label>
+                <input
+                  type="time"
+                  value={ledSettings.endTime}
+                  onChange={(e) => setLedSettings({...ledSettings, endTime: e.target.value})}
+                  style={styles.timeInput}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleLedUpdate}
+              style={styles.saveButton}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+            >
+              설정 저장
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.navbar}>
+        <div style={styles.navContainer}>
+          <button
+            onClick={() => navigate('/main')}
+            style={{ ...styles.navButton, color: '#6b7280' }}
+          >
+            <Home size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/community')}
+            style={{ ...styles.navButton, color: '#6b7280' }}
+          >
+            <Users size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
+          </button>
+          
+          <button style={{ ...styles.navButton, color: '#6b7280' }}>
+            <Heart size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>좋아요</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/setting')}
+            style={{ ...styles.navButton, color: '#10b981' }}
+          >
+            <Bell size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
+          </button>
+        </div>
       </div>
     </div>
   );
