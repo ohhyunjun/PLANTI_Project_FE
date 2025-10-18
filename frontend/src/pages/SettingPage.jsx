@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Home, Users, Heart, Sprout, Droplet, ThermometerSnowflake, Apple, MessageCircle, ThumbsUp } from 'lucide-react';
 // apiClient 직접 참조 대신, notification API 함수들을 가져옵니다.
-import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotificationById } from '../api/notification';
+import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotificationById, getUnreadNotifications, getUnreadCount } from '../api/notification';
 
 function SettingPage() {
   const navigate = useNavigate();
@@ -10,26 +10,35 @@ function SettingPage() {
   // 기존 상태 유지 - 백엔드에서 받아올 데이터로 변경
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // 백엔드에서 알림 목록 조회
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      // 수정된 부분: getNotifications 함수 사용
-      const response = await getNotifications();
+      // 수정된 부분: 토글 상태에 따라 다른 API 호출
+      const response = showUnreadOnly 
+        ? await getUnreadNotifications()
+        : await getNotifications();
       setNotifications(response.data);
+      
+      // 읽지 않은 개수도 함께 조회
+      const countResponse = await getUnreadCount();
+      setUnreadCount(countResponse.data.unreadCount);
     } catch (error) {
       console.error('알림 조회 실패:', error);
       // 실패 시 빈 배열로 설정
       setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [showUnreadOnly]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   // 기존 getNotificationIcon 함수 유지하되, 백엔드 타입과 매핑
   const getNotificationIcon = (type) => {
@@ -58,13 +67,17 @@ function SettingPage() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
   // 기존 handleNotificationClick 수정 - 백엔드 API 호출
   const handleNotificationClick = async (id) => {
     try {
       // 수정된 부분: markNotificationAsRead 함수 사용
       await markNotificationAsRead(id);
+      
+      const notification = notifications.find(n => n.id === id);
+      // 읽지 않은 알림이었다면 개수 감소
+      if (notification && !notification.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
       
       // 프론트엔드 상태 업데이트
       setNotifications(notifications.map(n => 
@@ -81,6 +94,8 @@ function SettingPage() {
       // 수정된 부분: markAllNotificationsAsRead 함수 사용
       await markAllNotificationsAsRead();
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      // 읽지 않은 개수 0으로 업데이트
+      setUnreadCount(0);
     } catch (error) {
       console.error('모든 알림 읽음 처리 실패:', error);
     }
@@ -92,6 +107,13 @@ function SettingPage() {
     try {
       // 수정된 부분: deleteNotificationById 함수 사용
       await deleteNotificationById(id);
+      
+      const notification = notifications.find(n => n.id === id);
+      // 읽지 않은 알림이었다면 개수 감소
+      if (notification && !notification.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      
       setNotifications(notifications.filter(n => n.id !== id));
     } catch (error) {
       console.error('알림 삭제 실패:', error);
@@ -156,6 +178,42 @@ function SettingPage() {
               </>
             )}
           </div>
+        </div>
+        
+        {/* 토글 버튼 */}
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => setShowUnreadOnly(false)}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              fontWeight: showUnreadOnly ? 'normal' : '600',
+              backgroundColor: showUnreadOnly ? 'white' : '#10b981',
+              color: showUnreadOnly ? '#6b7280' : 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            전체 알림
+          </button>
+          <button
+            onClick={() => setShowUnreadOnly(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              fontWeight: showUnreadOnly ? '600' : 'normal',
+              backgroundColor: showUnreadOnly ? '#10b981' : 'white',
+              color: showUnreadOnly ? 'white' : '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            읽지 않은 알림 {unreadCount > 0 && `(${unreadCount})`}
+          </button>
         </div>
       </div>
 

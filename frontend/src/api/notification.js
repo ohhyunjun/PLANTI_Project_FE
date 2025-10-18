@@ -19,3 +19,13 @@ export const markAllNotificationsAsRead = () => {
 export const deleteNotificationById = (noticeId) => {
     return apiClient.delete(`/api/notices/${noticeId}`);
 };
+
+// 읽지 않은 알림만 조회
+export const getUnreadNotifications = () => {
+    return apiClient.get('/api/notices/unread');
+};
+
+// 읽지 않은 알림 개수 조회
+export const getUnreadCount = () => {
+    return apiClient.get('/api/notices/unread/count');
+};
