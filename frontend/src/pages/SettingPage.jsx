@@ -134,30 +134,85 @@ function SettingPage() {
     return `${days}일 전`;
   };
 
-  // 로딩 중 표시
+  // 스타일 객체 추가 (MainPage와 동일한 구조)
+  const styles = {
+  container: {
+    minHeight: '100vh',
+    maxWidth: '412px',
+    minWidth: '412px',  // ✅ 추가: 최소 너비 고정
+    margin: '0 auto',
+    backgroundColor: '#f9fafb',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingBottom: '80px',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  header: {
+    backgroundColor: 'white',
+    borderBottom: '1px solid #e5e7eb',
+    padding: '16px 24px',
+    boxSizing: 'border-box'
+  },
+  navbar: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderTop: '1px solid #e5e7eb',
+    boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+  },
+  navContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    padding: '12px 16px',
+    maxWidth: '412px',
+    minWidth: '412px',  // ✅ 추가: 최소 너비 고정
+    margin: '0 auto'
+  },
+  navButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    minWidth: '60px',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer'
+  }
+};
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>알림을 불러오는 중...</p>
+      <div style={styles.container}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          flex: 1
+        }}>
+          <p>알림을 불러오는 중...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+    <div style={styles.container}>
       {/* 헤더 */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '1rem 1.5rem' }}>
+      <div style={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>알림</h1>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>알림</h1>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {unreadCount > 0 && (
               <>
                 <div style={{ 
                   backgroundColor: '#10b981', 
                   color: 'white', 
-                  fontSize: '0.875rem', 
+                  fontSize: '14px', 
                   fontWeight: '600',
-                  padding: '0.25rem 0.75rem', 
+                  padding: '4px 12px', 
                   borderRadius: '9999px' 
                 }}>
                   {unreadCount}개의 새 알림
@@ -165,8 +220,8 @@ function SettingPage() {
                 <button
                   onClick={markAllAsRead}
                   style={{
-                    padding: '0.25rem 0.75rem',
-                    fontSize: '0.875rem',
+                    padding: '4px 12px',
+                    fontSize: '14px',
                     backgroundColor: '#e5e7eb',
                     borderRadius: '9999px',
                     border: 'none',
@@ -180,18 +235,17 @@ function SettingPage() {
           </div>
         </div>
         
-        {/* 토글 버튼 */}
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+        <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
           <button
             onClick={() => setShowUnreadOnly(false)}
             style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.875rem',
+              padding: '8px 16px',
+              fontSize: '14px',
               fontWeight: showUnreadOnly ? 'normal' : '600',
               backgroundColor: showUnreadOnly ? 'white' : '#10b981',
               color: showUnreadOnly ? '#6b7280' : 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '0.5rem',
+              borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}
@@ -201,13 +255,13 @@ function SettingPage() {
           <button
             onClick={() => setShowUnreadOnly(true)}
             style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.875rem',
+              padding: '8px 16px',
+              fontSize: '14px',
               fontWeight: showUnreadOnly ? '600' : 'normal',
               backgroundColor: showUnreadOnly ? '#10b981' : 'white',
               color: showUnreadOnly ? 'white' : '#6b7280',
               border: '1px solid #e5e7eb',
-              borderRadius: '0.5rem',
+              borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}
@@ -218,9 +272,9 @@ function SettingPage() {
       </div>
 
       {/* 알림 리스트 */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '6rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {notifications.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>
             알림이 없습니다.
           </div>
         ) : (
@@ -231,8 +285,8 @@ function SettingPage() {
               style={{
                 display: 'flex',
                 alignItems: 'flex-start',
-                gap: '0.75rem',
-                padding: '1rem 1.5rem',
+                gap: '12px',
+                padding: '16px 24px',
                 borderBottom: '1px solid #f3f4f6',
                 cursor: 'pointer',
                 backgroundColor: notification.isRead ? 'white' : '#ecfdf5',
@@ -241,66 +295,65 @@ function SettingPage() {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#ecfdf5'}
             >
-              {/* 읽음/안읽음 표시 */}
-              <div style={{ flexShrink: 0, marginTop: '0.25rem' }}>
+              <div style={{ flexShrink: 0, marginTop: '4px' }}>
                 {!notification.isRead && (
                   <div style={{ 
-                    width: '0.75rem', 
-                    height: '0.75rem', 
+                    width: '12px', 
+                    height: '12px', 
                     backgroundColor: '#10b981', 
                     borderRadius: '9999px' 
                   }}></div>
                 )}
                 {notification.isRead && (
-                  <div style={{ width: '0.75rem', height: '0.75rem' }}></div>
+                  <div style={{ width: '12px', height: '12px' }}></div>
                 )}
               </div>
 
-              {/* 아이콘 */}
-              <div style={{ flexShrink: 0, marginTop: '0.125rem' }}>
+              <div style={{ flexShrink: 0, marginTop: '2px' }}>
                 {getNotificationIcon(notification.noticeType)}
               </div>
 
-              {/* 알림 내용 */}
               <div style={{ flex: 1 }}>
-                {/* deviceNickname이 있으면 표시 (기존 plantName, userName 대체) */}
                 {notification.deviceNickname && (
-                  <p style={{ 
-                    fontSize: '0.75rem',
+                  <div style={{
+                    display: 'inline-block',
+                    backgroundColor: notification.isRead ? '#f3f4f6' : '#d1fae5',
                     color: notification.isRead ? '#6b7280' : '#059669',
-                    fontWeight: notification.isRead ? 'normal' : '600'
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    marginBottom: '4px'
                   }}>
-                    {notification.deviceNickname}
-                  </p>
+                     {notification.deviceNickname}
+                  </div>
                 )}
                 <p style={{ 
-                  fontSize: '0.875rem',
-                  marginTop: '0.125rem',
+                  fontSize: '14px',
+                  marginTop: '2px',
                   color: notification.isRead ? '#6b7280' : '#1f2937',
                   fontWeight: notification.isRead ? 'normal' : '500'
                 }}>
                   {notification.message}
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
                   {formatTime(notification.createdAt)}
-                  {/* 우선순위가 1(긴급)인 경우 표시 */}
                   {notification.priority === 1 && (
-                    <span style={{ marginLeft: '0.5rem', color: '#ef4444' }}>⚠ 긴급</span>
+                    <span style={{ marginLeft: '8px', color: '#ef4444' }}>⚠ 긴급</span>
                   )}
                 </p>
               </div>
 
-              {/* 삭제 버튼 추가 */}
               <button
                 onClick={(e) => deleteNotification(notification.id, e)}
                 style={{
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
+                  padding: '4px 8px',
+                  fontSize: '12px',
                   color: '#6b7280',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '0.25rem'
+                  borderRadius: '4px'
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
@@ -313,91 +366,36 @@ function SettingPage() {
       </div>
 
       {/* 하단 네비게이션 바 */}
-      <div style={{ 
-        position: 'fixed', 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        backgroundColor: 'white', 
-        borderTop: '1px solid #e5e7eb',
-        boxShadow: '0 -1px 3px 0 rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-around', 
-          padding: '0.75rem 1rem',
-          maxWidth: '28rem',
-          margin: '0 auto'
-        }}>
+      <div style={styles.navbar}>
+        <div style={styles.navContainer}>
           <button
             onClick={() => navigate('/main')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Home size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>홈</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
           </button>
           
           <button
             onClick={() => navigate('/main/community')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Users size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>커뮤니티</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
           <button
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>좋아요</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>좋아요</span>
           </button>
           
           <button
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#10b981',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton, color: '#10b981' }}
           >
             <Bell size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>알림</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
           </button>
         </div>
       </div>
