@@ -1,19 +1,133 @@
+// src/pages/MainPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Home, Users, Heart } from "lucide-react";
+import { Bell, Home, Users, Heart, Pencil, Trash2 } from "lucide-react";
 import { registerDevice } from "../api/device";
 import { updatePlant } from "../api/plant";
 import apiClient from "../api/apiClient";
+
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Thin.woff') format('woff');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Light.woff') format('woff');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Medium.woff') format('woff');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraBold.woff') format('woff');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Black.woff') format('woff');
+    font-weight: 900;
+    font-display: swap;
+}
+
+/* 스크롤바 스타일 */
+.feature-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+
+.feature-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.feature-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.feature-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 기능 버튼 hover 효과 */
+.feature-button {
+  background-color: white;
+  transition: background-color 0.2s;
+}
+
+.feature-button:hover {
+  background-color: #D1FAE5;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
 
 function MainPage() {
   const navigate = useNavigate();
   const [devices, setDevices] = useState([]);
   const [inputCode, setInputCode] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const [adBannerImage, setAdBannerImage] = useState(null);
+
+  // 광고 배너 설정 (이미지 경로와 링크 URL을 여기서 수정하세요)
+  const adBanner = {
+    imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=400&fit=crop',
+    linkUrl: 'https://www.naver.com',
+    altText: '네이버 식물 광고'
+  };
 
   useEffect(() => {
     fetchDevices();
+    
+    // 스타일 태그 추가
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = fontStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
   }, []);
 
   const fetchDevices = async () => {
@@ -78,7 +192,6 @@ function MainPage() {
     }
   };
 
-  // 기기 삭제 함수 수정 - 완전 삭제가 아닌 소유권 해제
   const deleteDevice = async (serialNumber) => {
     if (!window.confirm(
       "정말 이 기기의 연결을 해제하시겠습니까?\n" +
@@ -89,7 +202,6 @@ function MainPage() {
     
     try {
       await apiClient.delete(`/api/devices/${serialNumber}`);
-      // 화면에서 기기 제거
       setDevices(devices.filter(d => d.serialNumber !== serialNumber));
       alert("기기 연결이 해제되었습니다.\n시리얼 번호를 알고 있는 다른 사용자가 이 기기를 등록할 수 있습니다.");
     } catch (error) {
@@ -98,15 +210,9 @@ function MainPage() {
     }
   };
 
-  const handleAdImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAdBannerImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  // 광고 배너 클릭 핸들러
+  const handleAdBannerClick = () => {
+    window.open(adBanner.linkUrl, '_blank');
   };
 
   const styles = {
@@ -128,26 +234,15 @@ function MainPage() {
       marginBottom: '16px'
     },
     plantiButton: {
-      flex: 1,
-      backgroundColor: '#10b981',
+      width: '60px',
+      height: '60px',
+      backgroundColor: '#4ade80',
       color: 'white',
       borderRadius: '16px',
       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
       padding: '12px',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
-    },
-    bellButton: {
-      backgroundColor: '#10b981',
-      color: 'white',
-      borderRadius: '16px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-      padding: '12px 24px',
-      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       border: 'none',
@@ -163,7 +258,8 @@ function MainPage() {
       marginBottom: '16px',
       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
       cursor: 'pointer',
-      backgroundColor: '#e0f2e9'
+      backgroundColor: '#e0f2e9',
+      transition: 'transform 0.2s, box-shadow 0.2s'
     },
     adBannerImage: {
       width: '100%',
@@ -177,8 +273,8 @@ function MainPage() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#e0f2e9',
-      color: '#059669',
+      backgroundColor: '#1b824eff',
+      color: '#4ade80',
       fontSize: '16px',
       fontWeight: '600'
     },
@@ -186,7 +282,7 @@ function MainPage() {
       display: 'flex',
       gap: '8px',
       overflowX: 'auto',
-      paddingBottom: '4px'
+      paddingBottom: '8px'
     },
     featureButton: {
       minWidth: '70px',
@@ -197,8 +293,7 @@ function MainPage() {
       flexDirection: 'column',
       alignItems: 'center',
       border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
+      cursor: 'pointer'
     },
     farmSection: {
       flex: 1,
@@ -220,59 +315,65 @@ function MainPage() {
     addButton: {
       backgroundColor: '#4ade80',
       color: 'white',
-      padding: '8px 12px',
+      padding: '10px 16px',
       borderRadius: '12px',
       border: 'none',
       cursor: 'pointer',
-      fontSize: '14px'
+      fontSize: '15px',
+      fontWeight: '600'
     },
     cancelButton: {
       backgroundColor: '#d1d5db',
-      padding: '8px 12px',
+      padding: '10px 16px',
       borderRadius: '12px',
       border: 'none',
       cursor: 'pointer',
-      fontSize: '14px'
+      fontSize: '15px',
+      fontWeight: '600'
     },
     deviceCard: {
-      display: 'flex',
-      alignItems: 'center',
       backgroundColor: '#d1fae5',
-      padding: '12px',
       borderRadius: '12px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      padding: '16px',
       marginBottom: '12px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
       transition: 'background-color 0.2s'
     },
     deviceIcon: {
-      width: '80px',
-      height: '80px',
-      backgroundColor: '#86efac',
-      borderRadius: '8px',
-      marginRight: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '36px',
-      flexShrink: 0
+      fontSize: '48px',
+      marginRight: '16px'
     },
     editButton: {
-      backgroundColor: '#fcd34d',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      border: 'none',
-      cursor: 'pointer'
-    },
-    deleteButton: {
-      backgroundColor: '#f87171',
+      backgroundColor: '#fbbf24',
       color: 'white',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '12px',
+      padding: '12px',
+      borderRadius: '10px',
       border: 'none',
       cursor: 'pointer',
-      marginTop: '4px'
+      fontSize: '14px',
+      fontWeight: '600',
+      minWidth: '48px',
+      minHeight: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    deleteButton: {
+      backgroundColor: '#ef4444',
+      color: 'white',
+      padding: '12px',
+      borderRadius: '10px',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '600',
+      minWidth: '48px',
+      minHeight: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     navbar: {
       position: 'fixed',
@@ -281,82 +382,82 @@ function MainPage() {
       right: 0,
       backgroundColor: 'white',
       borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+      boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
     },
     navContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      padding: '12px 16px',
       maxWidth: '412px',
-      margin: '0 auto'
+      margin: '0 auto',
+      display: 'flex',
+      justifyContent: 'space-around',
+      padding: '12px 0'
     },
     navButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '4px',
-      minWidth: '60px',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer'
+      padding: '8px 16px',
+      transition: 'color 0.2s'
     }
   };
 
   return (
     <div style={styles.container}>
-      {/* 상단 PLANTI 버튼과 알림 버튼 */}
+      <style>{fontStyles}</style>
+      
       <div style={styles.topSection}>
         <div style={styles.buttonRow}>
           <button
             onClick={() => navigate("/main")}
             style={styles.plantiButton}
-            onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+            onMouseEnter={e => e.target.style.backgroundColor = '#4ade80'}
+            onMouseLeave={e => e.target.style.backgroundColor = '#42cc75ff'}
           >
-            <span style={{ fontSize: '24px', marginRight: '8px' }}>🌱</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>PLANTI</span>
-          </button>
-          
-          <button
-            onClick={() => navigate("/main/setting")}
-            style={styles.bellButton}
-            onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
-          >
-            <Bell size={24} />
+            <span style={{ fontSize: '24px' }}>🌱</span>
+            <span style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px' }}>PLANTI</span>
           </button>
         </div>
 
         {/* 광고 배너 */}
         <div 
           style={styles.adBannerSection}
-          onClick={() => document.getElementById('adImageInput').click()}
+          onClick={handleAdBannerClick}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.02)';
+            e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+          }}
         >
-          {adBannerImage ? (
-            <img src={adBannerImage} alt="광고 배너" style={styles.adBannerImage} />
-          ) : (
-            <div style={styles.adBannerPlaceholder}>
-              <span style={{ fontSize: '48px', marginBottom: '8px' }}>🎨</span>
-              <span>클릭하여 광고 이미지 업로드</span>
-            </div>
-          )}
-          <input
-            id="adImageInput"
-            type="file"
-            accept="image/*"
-            onChange={handleAdImageChange}
-            style={{ display: 'none' }}
+          <img 
+            src={adBanner.imageUrl} 
+            alt={adBanner.altText} 
+            style={styles.adBannerImage}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
           />
+          <div style={{ ...styles.adBannerPlaceholder, display: 'none' }}>
+            <span style={{ fontSize: '48px', marginBottom: '8px' }}>🎨</span>
+            <span>광고 배너</span>
+            <span style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
+              클릭하여 광고 사이트로 이동
+            </span>
+          </div>
         </div>
 
-        {/* 기능 버튼들 - 가로 배열 */}
-        <div style={styles.featureButtonRow}>
+        {/* 기능 버튼들 */}
+        <div style={styles.featureButtonRow} className="feature-scroll">
           <button
             onClick={() => alert('My Farm')}
-            style={{ ...styles.featureButton, backgroundColor: '#86efac' }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#6ee7b7'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#86efac'}
+            style={styles.featureButton}
+            className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>🌿</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>My Farm</span>
@@ -364,9 +465,8 @@ function MainPage() {
 
           <button
             onClick={() => navigate("/main/diary")}
-            style={{ ...styles.featureButton, backgroundColor: '#fef08a' }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#fde047'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#fef08a'}
+            style={styles.featureButton}
+            className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>📓</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Diary</span>
@@ -374,9 +474,8 @@ function MainPage() {
 
           <button
             onClick={() => navigate("/main/aiphoto")}
-            style={{ ...styles.featureButton, backgroundColor: '#bfdbfe' }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#93c5fd'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#bfdbfe'}
+            style={styles.featureButton}
+            className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>🎨</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>AI Photo</span>
@@ -384,9 +483,8 @@ function MainPage() {
 
           <button
             onClick={() => alert('Avatar')}
-            style={{ ...styles.featureButton, backgroundColor: '#ddd6fe' }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#c4b5fd'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#ddd6fe'}
+            style={styles.featureButton}
+            className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>👤</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Avatar</span>
@@ -394,9 +492,8 @@ function MainPage() {
 
           <button
             onClick={() => navigate("/main/community")}
-            style={{ ...styles.featureButton, backgroundColor: '#fbcfe8' }}
-            onMouseEnter={e => e.target.style.backgroundColor = '#f9a8d4'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#fbcfe8'}
+            style={styles.featureButton}
+            className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>👥</span>
             <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Community</span>
@@ -450,8 +547,6 @@ function MainPage() {
               <div
                 key={device.serialNumber}
                 style={styles.deviceCard}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#a7f3d0'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#d1fae5'}
               >
                 <button
                   onClick={() => handleDeviceClick(device)}
@@ -467,29 +562,34 @@ function MainPage() {
                 >
                   <div style={styles.deviceIcon}>🌿</div>
                   <div>
-                    <p style={{ fontWeight: 'bold' }}>{device.deviceNickname}</p>
-                    <p style={{ fontSize: '12px', color: '#4b5563' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '18px' }}>{device.deviceNickname}</p>
+                    <p style={{ fontSize: '14px', color: '#4b5563', marginTop: '4px' }}>
                       시리얼: {device.serialNumber}
                     </p>
                     {device.plant ? (
-                      <p style={{ fontSize: '14px', marginTop: '4px' }}>
+                      <p style={{ fontSize: '16px', marginTop: '6px', fontWeight: '500' }}>
                         🌱 {device.plant.name} ({device.plant.species})
                       </p>
                     ) : (
-                      <p style={{ fontSize: '14px', marginTop: '4px', color: '#ea580c', fontWeight: '600' }}>
-                        ⚠️ 식물 미등록 - 클릭하여 등록
-                      </p>
+                      <div style={{ marginTop: '6px' }}>
+                        <p style={{ fontSize: '16px', color: '#ea580c', fontWeight: '700' }}>
+                          ⚠️ 식물 미등록
+                        </p>
+                        <p style={{ fontSize: '14px', color: '#ea580c', fontWeight: '500', marginTop: '2px' }}>
+                          클릭하여 등록
+                        </p>
+                      </div>
                     )}
                   </div>
                 </button>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginLeft: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '8px' }}>
                   {device.plant && (
                     <button onClick={() => editPlantName(device)} style={styles.editButton}>
-                      수정
+                      <Pencil size={20} strokeWidth={2.5} color="white" />
                     </button>
                   )}
                   <button onClick={() => deleteDevice(device.serialNumber)} style={styles.deleteButton}>
-                    삭제
+                    <Trash2 size={20} strokeWidth={2.5} color="white" />
                   </button>
                 </div>
               </div>
@@ -517,9 +617,11 @@ function MainPage() {
             <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
-          <button style={{ ...styles.navButton, color: '#6b7280' }}>
+          <button 
+            onClick={() => navigate('/community/mypage')}
+            style={{ ...styles.navButton, color: '#6b7280' }}>
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>좋아요</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
           </button>
           
           <button

@@ -1,13 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-// usePosts 대신 임시 데이터 사용 또는 PostContext 사용 (여기서는 메인 페이지와 통일 위해 Context는 제외)
-// import { usePosts } from "../context/PostContext"; 
-import downloadedImage from "../assets/strawberry.jpg"; // 메인 페이지와 동일한 이미지 사용
+import { Home, Users, User, Bell, PenSquare } from "lucide-react"; // ✅ User, PenSquare 추가
 
-// ⚠️ 참고: API_BASE는 환경 변수에서 가져옵니다. (메인 페이지에서 가져온 코드)
 const API_BASE = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
-// 아이콘을 위한 더미 컴포넌트 (메인 페이지에서 가져온 코드)
 const Icon = ({ name, className = "" }) => {
   const icons = {
     back: "←",
@@ -18,25 +14,18 @@ const Icon = ({ name, className = "" }) => {
     repost: "🔁",
     like: "❤",
     share: "↗",
-    home: "🏠",
-    create: "✍",
-    activity: "❤️",
-    mypage: "👤",
     recommend: "⭐",
     friend: "👥",
   };
   return <span className={`text-xl ${className}`}>{icons[name] || name}</span>;
 };
 
-// 게시글 카드 컴포넌트 (메인 페이지에서 가져온 스타일을 팔로잉에 맞게 적용)
 const PostCard = ({ post, nav }) => (
-    // ... (PostCard 컴포넌트 코드는 동일)
     <article 
         className="post-card bg-gray-900 text-gray-200 p-3 border-b border-gray-800"
         onClick={() => nav(`/main/community/post/${post.id}`)} 
     >
         <div className="flex justify-between items-center mb-2">
-            {/* 포스트 헤드 */}
             <div className="flex items-center">
                 <img
                     className="w-8 h-8 rounded-full object-cover mr-2 border border-green-500"
@@ -63,10 +52,8 @@ const PostCard = ({ post, nav }) => (
             <button className="text-base text-gray-400">...</button>
         </div>
 
-        {/* 포스트 본문 */}
         <div className="text-gray-300 mb-2 whitespace-pre-wrap text-sm">{post.content}</div>
 
-        {/* 포스트 미디어 (이미지) */}
         {post.image && (
             <div className="post-media mb-3 rounded-lg overflow-hidden border border-gray-700">
                 <img
@@ -77,7 +64,6 @@ const PostCard = ({ post, nav }) => (
             </div>
         )}
 
-        {/* 액션 버튼들 */}
         <div className="flex space-x-4 text-gray-400">
             <button className="flex items-center space-x-1 hover:text-blue-400 transition-colors">
                 <Icon name="comment" className="text-lg"/>
@@ -99,7 +85,6 @@ const PostCard = ({ post, nav }) => (
     </article>
 );
 
-
 function CommunityFollowingPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -107,17 +92,12 @@ function CommunityFollowingPage() {
     const [followingPosts, setFollowingPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     
-    // ... (loadFollowingPosts 및 useEffect 코드는 동일)
     const loadFollowingPosts = async () => {
         try {
             setLoading(true);
             const res = await fetch(`${API_BASE}/community/feed?type=following`, { credentials: "include" });
             const data = await res.json();
-            setFollowingPosts(
-                Array.isArray(data) ? data : [
-                    { id: 1, author: { username: "홍길동" }, content: "첫 번째 테스트 글입니다 🌱", image: downloadedImage, createdAt: new Date().toISOString(), replyCount: 15, repostCount: 3, likeCount: 45, },
-                ]
-            );
+            setFollowingPosts(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error("팔로잉 피드 불러오기 실패:", e);
             setFollowingPosts([]); 
@@ -137,10 +117,39 @@ function CommunityFollowingPage() {
         setQuery("");
     };
 
+    const styles = {
+      navbar: {
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        borderTop: '1px solid #e5e7eb',
+        boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+      },
+      navContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        padding: '12px 16px',
+        maxWidth: '412px',
+        margin: '0 auto'
+      },
+      navButton: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        minWidth: '60px',
+        border: 'none',
+        background: 'none',
+        cursor: 'pointer'
+      }
+    };
+
     return (
         <div className="community min-h-screen bg-gray-900 max-w-sm mx-auto shadow-2xl pb-16">
             
-            {/* 1. 상단 헤더: sticky top-0 유지 (스크롤 시 고정) */}
             <header className="sticky top-0 bg-gray-900 p-3 border-b border-gray-800 z-20">
                 <div className="flex justify-between items-center mb-3">
                     <button 
@@ -161,7 +170,6 @@ function CommunityFollowingPage() {
                     </div>
                 </div>
 
-                {/* 검색 폼: 헤더에 포함되어 sticky top-0에 의해 고정됨 */}
                 <form className="flex items-center space-x-2" onSubmit={onSearch}>
                     <input
                         type="search"
@@ -182,7 +190,6 @@ function CommunityFollowingPage() {
                 </form>
             </header>
             
-            {/* 2. 탭 내비게이션: sticky top-[170px] z-10 클래스 제거! (콘텐츠처럼 움직이게 함) */}
             <nav className="flex justify-around text-center py-2 border-b border-gray-800 bg-gray-900">
                 <Link
                     className={`flex flex-col items-center px-3 py-1 text-sm font-medium transition-colors 
@@ -211,32 +218,11 @@ function CommunityFollowingPage() {
                 </Link>
             </nav>
 
-            {/* 3. 팔로잉 피드 목록 및 배너 (탭 아래의 모든 콘텐츠는 함께 스크롤됨) */}
             <main className="comm-feed pt-3">
-                {/* 배너 섹션 (이전 단계에서 제거했지만, 메인 페이지 코드에는 포함되어 있었으므로 다시 추가합니다.) */}
-                <section className="comm-banner flex flex-col items-center py-5 bg-gray-900 border-b border-gray-800">
-                    <div className="w-11/12 overflow-hidden rounded-xl shadow-xl border border-gray-700">
-                        <img
-                            src={downloadedImage}
-                            alt="Strawberry Event"
-                            style={{ width: "100%", height: "200px", objectFit: "cover" }} 
-                        />
-                    </div>
-                    <div className="banner-caption text-center mt-3">
-                        <div className="banner-title text-lg font-bold text-red-400">
-                            Whose strawberry is the best?
-                        </div>
-                        <div className="banner-sub text-sm text-gray-300 mt-1">
-                            딸기 재배 챌린지에 참여해보세요!
-                        </div>
-                    </div>
-                </section>
-                
-                {/* 게시글 목록 */}
                 <h2 className="text-lg font-semibold text-gray-300 px-3 mb-3 pt-3">
                     팔로잉 피드
                 </h2>
-                {/* 로딩/결과 없음 메시지 */}
+                
                 {loading && (
                     <p className="text-center py-6 text-green-500 animate-pulse text-sm">
                         🌱 피드를 불러오는 중입니다...
@@ -253,39 +239,55 @@ function CommunityFollowingPage() {
                 )}
             </main>
 
-      {/* 4. 하단 네비게이션 바 (Footer): 메인 페이지와 동일한 구조와 스타일 */}
-      <footer className="sticky bottom-0 left-0 right-0 max-w-sm mx-auto bg-gray-900 border-t border-gray-800 flex justify-around items-center h-12 z-20 text-xs"> {/* height 및 폰트 크기 감소 */}
-        <Link 
-          className={`flex flex-col items-center px-2 py-1 font-medium transition-colors ${
-            location.pathname === "/main/community" ? "text-green-400" : "text-gray-400 hover:text-green-500"
-          }`} 
-          to="/main/community"
-        >
-          <Icon name="home" className="text-lg"/>
-          Home
-        </Link>
-        <Link 
-          className="flex flex-col items-center px-2 py-1 text-gray-400 font-medium hover:text-white transition-colors" 
-          to="/community/create"
-        >
-          <Icon name="create" className="text-lg"/>
-          작성
-        </Link>
-        <Link 
-          className="flex flex-col items-center px-2 py-1 text-gray-400 font-medium hover:text-red-400 transition-colors" 
-          to="/community/activity"
-        >
-          <Icon name="activity" className="text-lg"/>
-          활동
-        </Link>
-        <Link 
-          className="flex flex-col items-center px-2 py-1 text-red-400 font-medium hover:text-red-500 transition-colors" 
-          to="/community/mypage"
-        >
-          <Icon name="mypage" className="text-lg"/>
-          My Page
-        </Link>
-      </footer>
+      {/* ✅ 수정된 네비게이션 바 */}
+      <div style={styles.navbar}>
+        <div style={styles.navContainer}>
+          <button
+            onClick={() => navigate('/main')}
+            style={{ 
+              ...styles.navButton, 
+              color: location.pathname === '/main' ? '#10b981' : '#6b7280' 
+            }}
+          >
+            <Home size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate('/community/create')}
+            style={{ 
+              ...styles.navButton, 
+              color: location.pathname === '/community/create' ? '#10b981' : '#6b7280' 
+            }}
+          >
+            <PenSquare size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>작성</span>
+          </button>
+          
+          {/* ✅ Heart를 User로 변경, 활성화 색상 로직 추가 */}
+          <button 
+            onClick={() => navigate('/community/mypage')}
+            style={{ 
+              ...styles.navButton, 
+              color: location.pathname === '/community/mypage' ? '#10b981' : '#6b7280' 
+            }}
+          >
+            <User size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/setting')}
+            style={{ 
+              ...styles.navButton, 
+              color: location.pathname === '/main/setting' ? '#10b981' : '#6b7280' 
+            }}
+          >
+            <Bell size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

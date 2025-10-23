@@ -604,9 +604,11 @@ function GrowPage() {
             <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
-          <button style={{ ...styles.navButton, color: '#6b7280' }}>
+          <button 
+            onClick={() => navigate('/community/mypage')}
+            style={{ ...styles.navButton, color: '#6b7280' }}>
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>좋아요</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
           </button>
           
           <button

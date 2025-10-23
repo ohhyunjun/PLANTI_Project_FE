@@ -385,10 +385,21 @@ function SettingPage() {
           </button>
           
           <button
-            style={{ ...styles.navButton, color: '#6b7280' }}
+            onClick={() => navigate('/community/mypage')}
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              color: '#6b7280',
+              minWidth: '60px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
+            }}
           >
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>좋아요</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>My Page</span>
           </button>
           
           <button
