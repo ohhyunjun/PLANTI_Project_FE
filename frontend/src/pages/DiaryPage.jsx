@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Edit, Image, Film, FileText, X, Bell, Home, Users, Heart } from "lucide-react";
+import apiClient from "../api/apiClient";
 
 function DiaryPage() {
   const navigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 0, 1));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [events, setEvents] = useState({});
@@ -17,6 +18,46 @@ function DiaryPage() {
     content: '',
     plant: ''
   });
+  const [plants, setPlants] = useState([]);
+
+  // 식물 목록 가져오기
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        const response = await apiClient.get('/api/devices');
+        const devices = response.data;
+        
+        // 색상 팔레트
+        const colors = [
+          "rgb(248 113 113)", // 빨강
+          "rgb(251 146 60)",  // 주황
+          "rgb(250 204 21)",  // 노랑
+          "rgb(34 197 94)",   // 녹색
+          "rgb(59 130 246)",  // 파랑
+          "rgb(168 85 247)",  // 보라
+          "rgb(244 114 182)", // 분홍
+          "rgb(156 163 175)"  // 회색
+        ];
+        
+        // 식물이 등록된 기기만 필터링하고 색상 배정
+        const plantList = devices
+          .filter(device => device.plant)
+          .map((device, index) => ({
+            name: device.plant.name,
+            species: device.plant.species,
+            color: colors[index % colors.length],
+            deviceNickname: device.deviceNickname
+          }));
+        
+        setPlants(plantList);
+      } catch (error) {
+        console.error("식물 목록을 불러오는 데 실패했습니다.", error);
+        setPlants([]);
+      }
+    };
+    
+    fetchPlants();
+  }, []);
 
   const handleMonthChange = (dir) => {
     const newDate = new Date(currentDate);
@@ -130,12 +171,11 @@ function DiaryPage() {
     setShowModal(true);
   };
 
-  const plants = [
-    { name: "Rose", color: "rgb(248 113 113)" },
-    { name: "Lily", color: "rgb(250 204 21)" },
-    { name: "Cactus", color: "rgb(34 197 94)" },
-    { name: "Tulip", color: "rgb(244 114 182)" },
-  ];
+  // 식물 이름으로 색상 찾기
+  const getPlantColor = (plantName) => {
+    const plant = plants.find(p => p.name === plantName);
+    return plant ? plant.color : "rgb(156 163 175)"; // 기본 회색
+  };
 
   const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -208,7 +248,6 @@ function DiaryPage() {
     eventDot: {
       width: '6px',
       height: '6px',
-      backgroundColor: '#34d399',
       borderRadius: '50%',
       margin: '2px'
     },
@@ -224,26 +263,10 @@ function DiaryPage() {
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: '50%',
-      boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
-      cursor: 'pointer',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
       border: 'none',
-      transition: 'transform 0.2s, background-color 0.2s'
-    },
-    addButton: {
-      marginTop: '16px',
-      width: '56px',
-      height: '56px',
-      backgroundColor: '#10b981',
-      color: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: '50%',
-      boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
       cursor: 'pointer',
-      border: 'none',
-      transition: 'transform 0.2s, background-color 0.2s',
-      margin: '16px auto 0'
+      transition: 'background-color 0.2s'
     },
     modalOverlay: {
       position: 'fixed',
@@ -251,7 +274,7 @@ function DiaryPage() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0,0,0,0.5)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -261,200 +284,218 @@ function DiaryPage() {
       backgroundColor: 'white',
       borderRadius: '16px',
       padding: '24px',
-      maxWidth: '600px',
       width: '90%',
+      maxWidth: '500px',
       maxHeight: '90vh',
       overflowY: 'auto'
-    },
-    card: {
-      borderRadius: '12px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      padding: '16px',
-      backgroundColor: 'white'
     }
   };
-
-  const hasEvents = selectedDate && events[formatDate(selectedDate)]?.length > 0;
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button 
-          onClick={() => handleMonthChange(-1)}
-          style={styles.navButton}
-          onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'}
-          onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-        >
+        <button style={styles.navButton} onClick={() => handleMonthChange(-1)} onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}>
           <ChevronLeft size={24} />
         </button>
-        <h2 style={styles.title}>
-          {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
-        </h2>
-        <button 
-          onClick={() => handleMonthChange(1)}
-          style={styles.navButton}
-          onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'}
-          onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-        >
+        <h2 style={styles.title}>{currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월</h2>
+        <button style={styles.navButton} onClick={() => handleMonthChange(1)} onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}>
           <ChevronRight size={24} />
         </button>
       </div>
 
-      <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={{ backgroundColor: '#f9fafb' }}>
-              {weekDays.map((day, idx) => (
-                <th 
-                  key={day} 
-                  style={{
-                    ...styles.th,
-                    color: idx === 0 ? '#ef4444' : idx === 6 ? '#3b82f6' : '#374151'
-                  }}
-                >
-                  {day}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {calendarWeeks.map((week, weekIdx) => (
-              <tr key={weekIdx}>
-                {week.map((day, dayIdx) => {
-                  const isToday = day && new Date().toDateString() === 
-                    new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
-                  
-                  const isSelected = selectedDate && day &&
-                    formatDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day)) === 
-                    formatDate(selectedDate);
-                  
-                  const dateKey = day ? formatDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day)) : null;
-                  const hasDateEvents = dateKey && events[dateKey]?.length > 0;
-
-                  return (
-                    <td 
-                      key={dayIdx}
-                      style={styles.td}
-                      onClick={() => day && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-                      onMouseEnter={e => e.target.style.backgroundColor = '#f9fafb'}
-                      onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-                    >
-                      {day && (
-                        <div style={{ position: 'relative', height: '100%' }}>
-                          <div style={{
-                            ...styles.dayNumber,
-                            color: isSelected ? 'white' : (dayIdx === 0 ? '#ef4444' : dayIdx === 6 ? '#3b82f6' : '#1f2937'),
-                            backgroundColor: isSelected ? '#10b981' : 'transparent',
-                            border: isToday ? '2px solid #10b981' : 'none',
-                            fontWeight: isToday ? 'bold' : 'normal'
-                          }}>
-                            {day}
-                          </div>
-                          {hasDateEvents && (
-                            <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                              {events[dateKey].slice(0, 3).map((_, idx) => (
-                                <div key={idx} style={styles.eventDot} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            {weekDays.map((day, i) => (
+              <th key={i} style={styles.th}>{day}</th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {calendarWeeks.map((week, weekIndex) => (
+            <tr key={weekIndex}>
+              {week.map((day, dayIndex) => {
+                if (!day) return <td key={dayIndex} style={styles.td}></td>;
 
-      {selectedDate && (
-        <div style={{ marginTop: '32px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
-            {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 기록
-          </h3>
-          {hasEvents ? (
-            <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-              {events[formatDate(selectedDate)].map((event, idx) => (
-                <div key={idx} style={styles.card}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h4 style={{ fontWeight: '600', fontSize: '16px' }}>{event.name}</h4>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button 
-                        onClick={() => handleEdit(idx)} 
-                        style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(formatDate(selectedDate), idx)} 
-                        style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Trash2 size={16} color="#ef4444" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>{event.content}</p>
-                  
-                  {event.media && event.media.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
-                      {event.media.slice(0, 3).map((media, mIdx) => (
-                        <div key={mIdx} style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px', overflow: 'hidden' }}>
-                          {media.type === 'image' ? (
-                            <img src={media.url} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                              <Film size={24} color="#9ca3af" />
-                            </div>
-                          )}
-                        </div>
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const dateKey = formatDate(date);
+                const dayEvents = events[dateKey] || [];
+                const isToday = new Date().toDateString() === date.toDateString();
+
+                return (
+                  <td
+                    key={dayIndex}
+                    style={styles.td}
+                    onClick={() => setSelectedDate(date)}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={e => e.target.style.backgroundColor = 'white'}
+                  >
+                    <span style={{
+                      ...styles.dayNumber,
+                      backgroundColor: isToday ? '#10b981' : 'transparent',
+                      color: isToday ? 'white' : 'inherit'
+                    }}>
+                      {day}
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '4px', gap: '2px' }}>
+                      {dayEvents.map((event, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            ...styles.eventDot,
+                            backgroundColor: getPlantColor(event.plant)
+                          }}
+                        />
                       ))}
                     </div>
-                  )}
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {selectedDate && (
+        <div style={{ marginTop: '24px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+            {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
+          </h3>
+          {(() => {
+            const dateKey = formatDate(selectedDate);
+            const dayEvents = events[dateKey] || [];
+            const hasEvents = dayEvents.length > 0;
+
+            return hasEvents ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {dayEvents.map((event, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    style={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      position: 'relative'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          backgroundColor: getPlantColor(event.plant)
+                        }}></span>
+                        <h4 style={{ fontSize: '16px', fontWeight: '600' }}>{event.name}</h4>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleEdit(idx)}
+                          style={{
+                            padding: '6px',
+                            backgroundColor: '#f3f4f6',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={e => e.target.style.backgroundColor = '#e5e7eb'}
+                          onMouseLeave={e => e.target.style.backgroundColor = '#f3f4f6'}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(dateKey, idx)}
+                          style={{
+                            padding: '6px',
+                            backgroundColor: '#fee2e2',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
+                          onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
+                        >
+                          <Trash2 size={16} color="#ef4444" />
+                        </button>
+                      </div>
+                    </div>
                     {event.plant && (
-                      <span style={{ fontSize: '12px', backgroundColor: '#dcfce7', padding: '4px 8px', borderRadius: '12px' }}>
-                        🌱 {event.plant}
-                      </span>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                        식물: {event.plant}
+                      </p>
                     )}
-                    <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-                      {new Date(event.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-              <FileText size={48} color="#d1d5db" style={{ margin: '0 auto 12px' }} />
-              <p style={{ color: '#6b7280' }}>아직 기록이 없습니다.</p>
-              <p style={{ fontSize: '14px', color: '#9ca3af', marginTop: '4px' }}>+ 버튼을 눌러 첫 기록을 추가해보세요!</p>
-              
-              <button
-                onClick={openAddModal}
-                style={styles.addButton}
-                onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-                onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
-              >
-                <Plus size={28} />
-              </button>
-            </div>
-          )}
+                    <p style={{ color: '#374151', fontSize: '14px', marginBottom: '12px' }}>{event.content}</p>
+                    {event.media && event.media.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                        {event.media.map((media, i) => (
+                          <div key={i} style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px', overflow: 'hidden' }}>
+                            {media.type === 'image' ? (
+                              <img src={media.url} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <video src={media.url} controls style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: '#f9fafb', borderRadius: '12px' }}>
+                <FileText size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
+                <p style={{ color: '#6b7280', marginBottom: '16px' }}>이 날에는 기록이 없습니다</p>
+                <button
+                  onClick={openAddModal}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '14px'
+                  }}
+                  onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+                  onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+                >
+                  <Plus size={20} />
+                  <span>메모 추가</span>
+                </button>
+              </div>
+            );
+          })()}
         </div>
       )}
 
-      {selectedDate && hasEvents && (
-        <button
-          onClick={openAddModal}
-          style={styles.fab}
-          onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-          onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
-        >
-          <Plus size={28} />
-        </button>
-      )}
+      {selectedDate && (() => {
+        const dateKey = formatDate(selectedDate);
+        const dayEvents = events[dateKey] || [];
+        const hasEvents = dayEvents.length > 0;
+        return hasEvents ? (
+          <button
+            onClick={openAddModal}
+            style={styles.fab}
+            onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+            onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+          >
+            <Plus size={28} />
+          </button>
+        ) : null;
+      })()}
 
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
@@ -522,29 +563,36 @@ function DiaryPage() {
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>오늘의 식물</label>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                {plants.map((p) => (
-                  <label key={p.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="plant"
-                      value={p.name}
-                      checked={formData.plant === p.name}
-                      onChange={(e) => setFormData({...formData, plant: e.target.value})}
-                      style={{ display: 'none' }}
-                    />
-                    <span style={{ 
-                      width: '48px', 
-                      height: '48px', 
-                      borderRadius: '50%', 
-                      backgroundColor: p.color,
-                      border: formData.plant === p.name ? '4px solid #34d399' : 'none',
-                      transition: 'all 0.2s'
-                    }}></span>
-                    <span style={{ fontSize: '12px', marginTop: '8px' }}>{p.name}</span>
-                  </label>
-                ))}
-              </div>
+              {plants.length === 0 ? (
+                <p style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center', padding: '20px' }}>
+                  등록된 식물이 없습니다. 먼저 식물을 등록해주세요.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  {plants.map((p) => (
+                    <label key={p.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="plant"
+                        value={p.name}
+                        checked={formData.plant === p.name}
+                        onChange={(e) => setFormData({...formData, plant: e.target.value})}
+                        style={{ display: 'none' }}
+                      />
+                      <span style={{ 
+                        width: '48px', 
+                        height: '48px', 
+                        borderRadius: '50%', 
+                        backgroundColor: p.color,
+                        border: formData.plant === p.name ? '4px solid #34d399' : 'none',
+                        transition: 'all 0.2s'
+                      }}></span>
+                      <span style={{ fontSize: '12px', marginTop: '8px', fontWeight: '500' }}>{p.name}</span>
+                      <span style={{ fontSize: '10px', color: '#6b7280' }}>({p.species})</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '12px', paddingTop: '16px' }}>
@@ -620,6 +668,7 @@ function DiaryPage() {
           </button>
           
           <button
+            onClick={() => navigate('/community/mypage')}
             style={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -633,7 +682,7 @@ function DiaryPage() {
             }}
           >
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>좋아요</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>My Page</span>
           </button>
           
           <button
