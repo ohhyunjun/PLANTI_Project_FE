@@ -18,6 +18,8 @@ function GrowPage() {
   const [isLedOn, setIsLedOn] = useState(false);
   const [showLightingTime, setShowLightingTime] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [aiAdvice, setAiAdvice] = useState(""); // AI 조언 상태
+  const [loadingAdvice, setLoadingAdvice] = useState(false); // AI 조언 로딩 상태
 
   useEffect(() => {
     if (!serialNumber) return;
@@ -29,6 +31,13 @@ function GrowPage() {
     const interval = setInterval(loadSensorData, 10000);
     return () => clearInterval(interval);
   }, [serialNumber]);
+
+  // 초기 로드 시에만 AI 조언 가져오기
+  useEffect(() => {
+    if (serialNumber && !loading && ledSettings.intensity > 0) {
+      fetchAiAdvice();
+    }
+  }, [serialNumber, loading]); // ledSettings 의존성 제거
 
   const loadInitialData = async () => {
     try {
@@ -69,6 +78,26 @@ function GrowPage() {
     }
   };
 
+  // AI 조언 가져오기 함수
+  const fetchAiAdvice = async () => {
+    if (!serialNumber) return;
+    
+    setLoadingAdvice(true);
+    try {
+      const response = await apiClient.post('/api/ai/led-advice', {
+        serialNumber: serialNumber
+      });
+      console.log("AI 조언 응답:", response.data);
+      console.log("AI 조언 텍스트:", response.data.advice);
+      setAiAdvice(response.data.advice);
+    } catch (error) {
+      console.error("AI 조언 로드 실패:", error);
+      setAiAdvice("AI 조언을 불러올 수 없습니다.");
+    } finally {
+      setLoadingAdvice(false);
+    }
+  };
+
   const handleLedUpdate = async () => {
     try {
       const payload = {
@@ -83,6 +112,11 @@ function GrowPage() {
       console.log("응답:", response.data);
       
       alert("LED 설정이 저장되었습니다.");
+      
+      // LED 설정 저장 후 AI 조언 새로 가져오기
+      if (isLedOn && ledSettings.intensity > 0) {
+        await fetchAiAdvice();
+      }
     } catch (error) {
       console.error("LED 설정 실패:", error.response?.data || error);
       alert("LED 설정에 실패했습니다: " + (error.response?.data || error.message));
@@ -541,15 +575,6 @@ function GrowPage() {
                   </button>
                 ))}
               </div>
-              {isLedOn && (
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#6b7280',
-                  marginTop: '4px'
-                }}>
-                  조명이 적당해요. 식물이 잘 자라요.
-                </div>
-              )}
             </div>
 
             {/* ✅ 개선된 시간 입력 부분 */}
@@ -573,6 +598,101 @@ function GrowPage() {
                 />
               </div>
             </div>
+
+            {/* AI 조언 영역 */}
+            {isLedOn && (
+              <div style={{ 
+                fontSize: '12px', 
+                marginTop: '16px',
+                marginBottom: '16px',
+                minHeight: '20px'
+              }}>
+                {loadingAdvice ? (
+                  <span style={{ color: '#9ca3af' }}>AI 조언을 불러오는 중...</span>
+                ) : aiAdvice ? (
+                  <div style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    lineHeight: '1.6'
+                  }}>
+                    {(() => {
+                      // **진단:** 과 **조언:** 형식 처리
+                      const diagnosisMatch = aiAdvice.match(/\*\*진단:\*\*\s*(.+?)(?=\*\*조언:\*\*|$)/s);
+                      const adviceMatch = aiAdvice.match(/\*\*조언:\*\*\s*(.+?)$/s);
+                      
+                      if (diagnosisMatch || adviceMatch) {
+                        return (
+                          <>
+                            {diagnosisMatch && (
+                              <div style={{ marginBottom: '8px' }}>
+                                <div style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '6px',
+                                  marginBottom: '4px'
+                                }}>
+                                  <span style={{ fontSize: '16px' }}>🔍</span>
+                                  <span style={{ 
+                                    fontWeight: 'bold', 
+                                    color: '#15803d',
+                                    fontSize: '13px'
+                                  }}>진단</span>
+                                </div>
+                                <div style={{ 
+                                  color: '#374151',
+                                  paddingLeft: '22px',
+                                  fontSize: '12px'
+                                }}>
+                                  {diagnosisMatch[1].trim()}
+                                </div>
+                              </div>
+                            )}
+                            {adviceMatch && (
+                              <div>
+                                <div style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '6px',
+                                  marginBottom: '4px'
+                                }}>
+                                  <span style={{ fontSize: '16px' }}>💡</span>
+                                  <span style={{ 
+                                    fontWeight: 'bold', 
+                                    color: '#15803d',
+                                    fontSize: '13px'
+                                  }}>조언</span>
+                                </div>
+                                <div style={{ 
+                                  color: '#374151',
+                                  paddingLeft: '22px',
+                                  fontSize: '12px'
+                                }}>
+                                  {adviceMatch[1].trim()}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      } else {
+                        // 포맷이 없는 일반 텍스트는 그대로 표시
+                        return (
+                          <div style={{ 
+                            color: '#374151',
+                            fontSize: '12px'
+                          }}>
+                            {aiAdvice}
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                ) : (
+                  <span style={{ color: '#9ca3af' }}>조명 설정을 분석 중입니다.</span>
+                )}
+              </div>
+            )}
 
             <button
               onClick={handleLedUpdate}
