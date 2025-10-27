@@ -1,7 +1,32 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Camera, Bell, Home, Users, Heart } from "lucide-react";
+import apiClient from "../api/apiClient";
+
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
 
 function AiPhotoStartPage() {
   const navigate = useNavigate();
@@ -10,6 +35,8 @@ function AiPhotoStartPage() {
   const [aiImages, setAiImages] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [stylePrompt, setStylePrompt] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -36,28 +63,34 @@ function AiPhotoStartPage() {
   };
 
   const handleUpdate = async () => {
+    if (!stylePrompt.trim()) {
+      alert("어떻게 만들지 설명을 입력해주세요!");
+      return;
+    }
+
+    setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("model", "gpt-image-variations");
-      formData.append("n", "1");
-      formData.append("size", "512x512");
-      formData.append("image", files[0]);
+      formData.append('image', files[0]);
+      
+      const uploadResponse = await apiClient.post('/api/aiArts/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const uploadedImageUrl = uploadResponse.data.imageUrl;
+      
+      const aiArtResponse = await apiClient.post('/api/aiArts', {
+        originalImageUrl: uploadedImageUrl,
+        style: stylePrompt
+      });
 
-      const response = await axios.post(
-        "https://api.openai.com/v1/images/variations",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setAiImages(response.data.data.map((img) => img.url));
+      setAiImages([aiArtResponse.data.artImageUrl]);
       setCurrentStep(2);
     } catch (error) {
       console.error("AI 변환 실패:", error);
+      alert("AI 이미지 생성에 실패했습니다: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,44 +100,51 @@ function AiPhotoStartPage() {
     link.download = "ai-image.png";
     link.click();
   };
-
+  
+  // 스타일 객체 (GrowPage/SettingPage 와 유사하게)
   const styles = {
     container: {
-      width: '412px',
-      height: '1080px',
+      minHeight: '100vh',
+      maxWidth: '412px',
       margin: '0 auto',
-      backgroundColor: '#f3f4f6',
+      backgroundColor: '#f9fafb', // 배경색 통일
       display: 'flex',
       flexDirection: 'column',
       paddingBottom: '80px',
-      overflow: 'hidden'
+      boxSizing: 'border-box'
     },
     header: {
       backgroundColor: 'white',
       padding: '16px',
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      position: 'sticky',
+      top: 0,
+      zIndex: 100
     },
     backButton: {
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      padding: '8px'
+      padding: '8px',
+      marginRight: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     title: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: '16px',
-      color: '#9ca3af',
-      marginLeft: '-40px'
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#374151'
     },
     progressDots: {
       display: 'flex',
       gap: '8px',
       justifyContent: 'center',
-      margin: '16px 0'
+      margin: '24px 0'
     },
     dot: {
       width: '8px',
@@ -116,17 +156,17 @@ function AiPhotoStartPage() {
       width: '8px',
       height: '8px',
       borderRadius: '50%',
-      backgroundColor: '#1f2937'
+      backgroundColor: '#0D986A' // 메인 색상 적용
     },
     content: {
       backgroundColor: 'white',
-      margin: '8px',
+      margin: '0 16px',
       borderRadius: '16px',
       padding: '24px 16px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
       flex: 1
     },
     stepTitle: {
@@ -151,7 +191,7 @@ function AiPhotoStartPage() {
       color: '#9ca3af'
     },
     addButton: {
-      backgroundColor: '#10b981',
+      backgroundColor: '#0D986A', // 메인 색상 적용
       color: 'white',
       border: 'none',
       borderRadius: '24px',
@@ -162,24 +202,19 @@ function AiPhotoStartPage() {
       transition: 'background-color 0.2s'
     },
     previewGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       gap: '12px',
       width: '100%',
-      marginBottom: '24px',
-      padding: '0 8px'
+      marginBottom: '24px'
     },
     previewImageContainer: {
       position: 'relative',
-      width: '100%',
-      paddingBottom: '100%',
-      overflow: 'visible',
-      borderRadius: '12px'
+      width: '160px',
+      height: '160px',
     },
     previewImage: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
       width: '100%',
       height: '100%',
       objectFit: 'cover',
@@ -195,7 +230,6 @@ function AiPhotoStartPage() {
       height: '28px',
       borderRadius: '6px',
       backgroundColor: 'white',
-      color: '#6b7280',
       border: '1px solid #d1d5db',
       display: 'flex',
       alignItems: 'center',
@@ -205,45 +239,25 @@ function AiPhotoStartPage() {
       transition: 'all 0.2s',
       boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
       fontSize: '18px',
-      fontWeight: 'bold',
       lineHeight: 1
     },
-    buttonGroup: {
-      display: 'flex',
-      gap: '12px',
-      width: '100%',
-      padding: '0 8px'
-    },
-    addMoreButton: {
-      flex: 1,
-      backgroundColor: '#6b7280',
-      color: 'white',
-      border: 'none',
-      borderRadius: '24px',
-      padding: '14px 24px',
-      fontSize: '16px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
-    },
     startButton: {
-      flex: 1,
-      backgroundColor: '#10b981',
+      backgroundColor: '#0D986A', // 메인 색상 적용
       color: 'white',
       border: 'none',
       borderRadius: '24px',
-      padding: '14px 24px',
-      fontSize: '16px',
+      padding: '14px 30px',
+      fontSize: '18px',
       fontWeight: '600',
       cursor: 'pointer',
-      transition: 'background-color 0.2s'
+      transition: 'background-color 0.2s',
+      width: '100%'
     },
     resultImage: {
       width: '100%',
       maxWidth: '400px',
       borderRadius: '12px',
-      marginBottom: '16px',
-      cursor: 'pointer'
+      marginBottom: '16px'
     },
     resultButtonGroup: {
       display: 'flex',
@@ -253,23 +267,23 @@ function AiPhotoStartPage() {
     },
     saveButton: {
       flex: 1,
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#0D986A', // 메인 색상 적용
       color: 'white',
       border: 'none',
-      borderRadius: '12px',
-      padding: '12px',
-      fontSize: '14px',
+      borderRadius: '24px',
+      padding: '14px 24px',
+      fontSize: '16px',
       fontWeight: '600',
       cursor: 'pointer'
     },
     shareButton: {
       flex: 1,
-      backgroundColor: '#ec4899',
+      backgroundColor: '#3b82f6',
       color: 'white',
       border: 'none',
-      borderRadius: '12px',
-      padding: '12px',
-      fontSize: '14px',
+      borderRadius: '24px',
+      padding: '14px 24px',
+      fontSize: '16px',
       fontWeight: '600',
       cursor: 'pointer'
     },
@@ -279,52 +293,55 @@ function AiPhotoStartPage() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      backgroundColor: 'rgba(0,0,0,0.8)',
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'center',
+      alignItems: 'center',
       zIndex: 1000,
-      padding: '20px'
+      cursor: 'pointer'
     },
     modalImage: {
       maxWidth: '90%',
-      maxHeight: '90vh',
-      objectFit: 'contain',
-      borderRadius: '8px',
-      cursor: 'pointer'
+      maxHeight: '90%',
+      borderRadius: '12px'
     },
     navbar: {
       position: 'fixed',
       bottom: 0,
-      left: 0,
-      right: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
       backgroundColor: 'white',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
     },
     navContainer: {
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'space-around',
-      padding: '12px 16px',
-      maxWidth: '412px',
-      margin: '0 auto'
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
     },
     navButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '4px',
-      minWidth: '60px',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer'
+      padding: '8px 16px',
+      transition: 'color 0.2s'
     }
   };
 
   return (
     <div style={styles.container}>
-      {/* 헤더 */}
+      <style>{fontStyles}</style>
+      
+      {/* 헤더 (SettingPage와 동일한 구조) */}
       <div style={styles.header}>
         <button 
           style={styles.backButton}
@@ -332,12 +349,11 @@ function AiPhotoStartPage() {
         >
           <ChevronLeft size={24} />
         </button>
-        <div style={styles.title}>사진 AI 그림화 등록</div>
+        <div style={styles.title}>AI 사진 변환</div>
       </div>
 
-      {/* 진행 표시 점 */}
       <div style={styles.progressDots}>
-        {[0, 1, 2, 3, 4].map((step) => (
+        {[0, 1, 2].map((step) => (
           <div 
             key={step} 
             style={currentStep >= step ? styles.activeDot : styles.dot}
@@ -345,17 +361,16 @@ function AiPhotoStartPage() {
         ))}
       </div>
 
-      {/* 메인 콘텐츠 */}
       <div style={styles.content}>
         {currentStep === 0 && (
           <>
-            <h2 style={styles.stepTitle}>사진 업로드</h2>
+            <h2 style={styles.stepTitle}>AI로 만들 사진 업로드</h2>
             
             <label 
               htmlFor="fileInput"
               style={styles.uploadCircle}
-              onMouseEnter={e => e.target.style.borderColor = '#10b981'}
-              onMouseLeave={e => e.target.style.borderColor = '#d1d5db'}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0D986A'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; }}
             >
               <Camera size={64} style={styles.cameraIcon} />
             </label>
@@ -363,7 +378,6 @@ function AiPhotoStartPage() {
             <input
               id="fileInput"
               type="file"
-              multiple
               accept="image/*"
               onChange={handleFileChange}
               style={{ display: 'none' }}
@@ -372,17 +386,17 @@ function AiPhotoStartPage() {
             <button 
               style={styles.addButton}
               onClick={() => document.getElementById('fileInput').click()}
-              onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-              onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0a7d55'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0D986A'; }}
             >
-              사진 추가
+              사진 선택하기
             </button>
           </>
         )}
 
         {currentStep === 1 && preview.length > 0 && (
           <>
-            <h2 style={styles.stepTitle}>선택한 사진</h2>
+            <h2 style={styles.stepTitle}>어떻게 바꿔볼까요?</h2>
             
             <div style={styles.previewGrid}>
               {preview.map((src, idx) => (
@@ -395,96 +409,64 @@ function AiPhotoStartPage() {
                   />
                   <button
                     style={styles.deleteButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveImage(idx);
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = '#fef2f2';
-                      e.currentTarget.style.borderColor = '#ef4444';
-                      e.currentTarget.style.color = '#ef4444';
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                      e.currentTarget.style.borderColor = '#d1d5db';
-                      e.currentTarget.style.color = '#6b7280';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
+                    onClick={() => handleRemoveImage(idx)}
                   >
-                    <svg 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    ✕
                   </button>
                 </div>
               ))}
             </div>
 
-            <input
-              id="fileInputMore"
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
-
-            <div style={styles.buttonGroup}>
-              <button 
-                style={styles.addMoreButton}
-                onClick={() => document.getElementById('fileInputMore').click()}
-                onMouseEnter={e => e.target.style.backgroundColor = '#4b5563'}
-                onMouseLeave={e => e.target.style.backgroundColor = '#6b7280'}
-              >
-                사진 더 추가
-              </button>
-              
-              <button 
-                style={styles.startButton}
-                onClick={handleUpdate}
-                onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-                onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
-              >
-                AI 그림화 시작
-              </button>
+            <div style={{ width: '100%', marginBottom: '24px' }}>
+              <label style={{
+                display: 'block', fontSize: '14px', fontWeight: '600',
+                color: '#374151', marginBottom: '8px'
+              }}>
+                어떻게 만들어드릴까요? 🎨
+              </label>
+              <textarea
+                value={stylePrompt}
+                onChange={(e) => setStylePrompt(e.target.value)}
+                placeholder="예: 수채화 스타일로, 봄날의 정원처럼..."
+                style={{
+                  width: '100%', minHeight: '100px', padding: '12px',
+                  fontSize: '14px', border: '1px solid #d1d5db',
+                  borderRadius: '8px', resize: 'vertical',
+                  fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box'
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#0D986A'; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; }}
+              />
             </div>
+
+            <button 
+              style={{...styles.startButton, opacity: loading ? 0.6 : 1 }}
+              onClick={handleUpdate}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#0a7d55'; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#0D986A'; }}
+              disabled={loading}
+            >
+              {loading ? 'AI 생성 중...' : 'AI 그림화 시작'}
+            </button>
           </>
         )}
 
         {currentStep === 2 && aiImages.length > 0 && (
           <>
-            <h2 style={styles.stepTitle}>사진 변화 알림</h2>
+            <h2 style={styles.stepTitle}>AI 그림 완성!</h2>
             
             {aiImages.map((url, idx) => (
               <div key={idx} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <img 
-                  src={url} 
-                  alt={`ai-${idx}`} 
-                  style={styles.resultImage}
+                  src={url} alt={`ai-${idx}`} style={styles.resultImage}
                   onClick={() => setSelectedImage(url)}
                 />
                 
                 <div style={styles.resultButtonGroup}>
-                  <button 
-                    onClick={() => handleSave(url)}
-                    style={styles.saveButton}
-                  >
+                  <button onClick={() => handleSave(url)} style={styles.saveButton}>
                     저장
                   </button>
-                  <button 
-                    onClick={() => alert("커뮤니티 공유 기능 연결 필요!")}
-                    style={styles.shareButton}
-                  >
+                  <button onClick={() => alert("커뮤니티 공유 기능 연결 필요!")} style={styles.shareButton}>
                     공유하기
                   </button>
                 </div>
@@ -494,50 +476,31 @@ function AiPhotoStartPage() {
         )}
       </div>
 
-      {/* 이미지 확대 보기 모달 */}
       {selectedImage && (
-        <div 
-          style={styles.modalOverlay}
-          onClick={() => setSelectedImage(null)}
-        >
-          <img 
-            src={selectedImage} 
-            alt="확대 이미지" 
-            style={styles.modalImage}
-          />
+        <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="확대 이미지" style={styles.modalImage}/>
         </div>
       )}
 
-      {/* 하단 네비게이션 바 */}
+      {/* 네비게이션 바 (SettingPage와 동일한 구조) */}
       <div style={styles.navbar}>
         <div style={styles.navContainer}>
-          <button
-            onClick={() => navigate('/main')}
-            style={{ ...styles.navButton, color: '#6b7280' }}
-          >
+          <button onClick={() => navigate('/main')} style={{ ...styles.navButton, color: '#0D986A' }}> {/* 홈 활성화 */ }
             <Home size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
           </button>
           
-          <button
-            onClick={() => navigate('/main/community')}
-            style={{ ...styles.navButton, color: '#6b7280' }}
-          >
+          <button onClick={() => navigate('/main/community')} style={{ ...styles.navButton, color: '#6b7280' }}>
             <Users size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
-          <button
-            onClick={() => navigate('/community/mypage')} 
-            style={{ ...styles.navButton, color: '#6b7280' }}>
+          <button onClick={() => navigate('/community/mypage')} style={{ ...styles.navButton, color: '#6b7280' }}>
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
           </button>
           
-          <button
-            onClick={() => navigate('/main/setting')}
-            style={{ ...styles.navButton, color: '#6b7280' }}
-          >
+          <button onClick={() => navigate('/main/setting')} style={{ ...styles.navButton, color: '#6b7280' }}>
             <Bell size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
           </button>
