@@ -1,7 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Bell, Home, Users, Heart } from "lucide-react";
+import { Bell, Home, Users, Heart, ChevronLeft } from "lucide-react";
 import apiClient from "../api/apiClient";
+
+// 폰트 스타일 정의
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
 
 function GrowPage() {
   const navigate = useNavigate();
@@ -21,25 +46,7 @@ function GrowPage() {
   const [aiAdvice, setAiAdvice] = useState(""); // AI 조언 상태
   const [loadingAdvice, setLoadingAdvice] = useState(false); // AI 조언 로딩 상태
 
-  useEffect(() => {
-    if (!serialNumber) return;
-    loadInitialData();
-  }, [serialNumber]);
-
-  useEffect(() => {
-    if (!serialNumber) return;
-    const interval = setInterval(loadSensorData, 10000);
-    return () => clearInterval(interval);
-  }, [serialNumber]);
-
-  // 초기 로드 시에만 AI 조언 가져오기
-  useEffect(() => {
-    if (serialNumber && !loading && ledSettings.intensity > 0) {
-      fetchAiAdvice();
-    }
-  }, [serialNumber, loading]); // ledSettings 의존성 제거
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       const deviceRes = await apiClient.get(`/api/devices/${serialNumber}`);
       setDevice(deviceRes.data);
@@ -67,19 +74,18 @@ function GrowPage() {
       console.error("초기 데이터 로드 실패:", error);
       setLoading(false);
     }
-  };
+  }, [serialNumber]);
 
-  const loadSensorData = async () => {
+  const loadSensorData = useCallback(async () => {
     try {
       const sensorRes = await apiClient.get(`/api/devices/${serialNumber}/sensors`);
       setSensorData(sensorRes.data);
     } catch (error) {
       console.error("센서 데이터 로드 실패:", error);
     }
-  };
+  }, [serialNumber]);
 
-  // AI 조언 가져오기 함수
-  const fetchAiAdvice = async () => {
+  const fetchAiAdvice = useCallback(async () => {
     if (!serialNumber) return;
     
     setLoadingAdvice(true);
@@ -87,8 +93,6 @@ function GrowPage() {
       const response = await apiClient.post('/api/ai/led-advice', {
         serialNumber: serialNumber
       });
-      console.log("AI 조언 응답:", response.data);
-      console.log("AI 조언 텍스트:", response.data.advice);
       setAiAdvice(response.data.advice);
     } catch (error) {
       console.error("AI 조언 로드 실패:", error);
@@ -96,7 +100,27 @@ function GrowPage() {
     } finally {
       setLoadingAdvice(false);
     }
-  };
+  }, [serialNumber]);
+
+  useEffect(() => {
+    if (serialNumber) {
+      loadInitialData();
+    }
+  }, [serialNumber, loadInitialData]);
+
+  useEffect(() => {
+    if (serialNumber) {
+      const interval = setInterval(loadSensorData, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [serialNumber, loadSensorData]);
+
+  useEffect(() => {
+    if (serialNumber && !loading && ledSettings.intensity > 0) {
+      fetchAiAdvice();
+    }
+  }, [serialNumber, loading, ledSettings.intensity, fetchAiAdvice]);
+
 
   const handleLedUpdate = async () => {
     try {
@@ -105,15 +129,10 @@ function GrowPage() {
         startTime: ledSettings.startTime,
         endTime: ledSettings.endTime
       };
-
-      console.log("LED 설정 전송:", payload);
       
-      const response = await apiClient.put(`/api/leds/${serialNumber}`, payload);
-      console.log("응답:", response.data);
-      
+      await apiClient.put(`/api/leds/${serialNumber}`, payload);
       alert("LED 설정이 저장되었습니다.");
       
-      // LED 설정 저장 후 AI 조언 새로 가져오기
       if (isLedOn && ledSettings.intensity > 0) {
         await fetchAiAdvice();
       }
@@ -140,42 +159,6 @@ function GrowPage() {
     return diffDays;
   };
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        maxWidth: '412px',
-        margin: '0 auto',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        flexDirection: 'column',
-        paddingBottom: '80px'
-      }}>
-        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          로딩 중...
-        </div>
-      </div>
-    );
-  }
-
-  if (!device || !plant) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        maxWidth: '412px',
-        margin: '0 auto',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        flexDirection: 'column',
-        paddingBottom: '80px'
-      }}>
-        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          기기 정보를 불러올 수 없습니다.
-        </div>
-      </div>
-    );
-  }
-
   const styles = {
     container: {
       minHeight: '100vh',
@@ -187,42 +170,42 @@ function GrowPage() {
       paddingBottom: '80px'
     },
     header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '16px',
       backgroundColor: 'white',
-      borderBottom: '1px solid #e5e7eb'
-    },
-    logo: {
+      padding: '16px',
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      fontSize: '18px',
-      fontWeight: 'bold'
+      position: 'sticky',
+      top: 0,
+      zIndex: 100
     },
-    headerButtons: {
-      display: 'flex',
-      gap: '8px'
-    },
-    iconButton: {
-      padding: '8px',
-      backgroundColor: 'transparent',
+    backButton: {
+      background: 'none',
       border: 'none',
       cursor: 'pointer',
-      color: '#6b7280',
+      padding: '8px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     },
+    headerTitle: {
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#374151',
+      marginLeft: '8px'
+    },
     content: {
       flex: 1,
       overflowY: 'auto',
-      padding: '16px'
+      padding: '16px',
+      boxSizing: 'border-box'
     },
     deviceTitle: {
       fontSize: '20px',
       fontWeight: 'bold',
+      margin: '0',
       marginBottom: '16px',
       textAlign: 'center'
     },
@@ -307,12 +290,12 @@ function GrowPage() {
     switch: {
       width: '50px',
       height: '28px',
-      backgroundColor: isLedOn ? '#10b981' : '#d1d5db',
+      backgroundColor: isLedOn ? '#0D986A' : '#d1d5db',
       borderRadius: '14px',
       position: 'relative',
       cursor: 'pointer',
       transition: 'background-color 0.3s ease',
-      boxShadow: isLedOn ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none'
+      boxShadow: isLedOn ? '0 0 8px rgba(13, 152, 106, 0.4)' : 'none'
     },
     switchButton: {
       width: '24px',
@@ -331,7 +314,7 @@ function GrowPage() {
     switchLabel: {
       fontSize: '10px',
       fontWeight: 'bold',
-      color: isLedOn ? '#10b981' : '#9ca3af',
+      color: isLedOn ? '#0D986A' : '#9ca3af',
       transition: 'color 0.3s ease'
     },
     brightnessButtons: {
@@ -382,7 +365,7 @@ function GrowPage() {
     saveButton: {
       width: '100%',
       padding: '12px',
-      backgroundColor: '#10b981',
+      backgroundColor: '#0D986A',
       color: 'white',
       border: 'none',
       borderRadius: '8px',
@@ -394,54 +377,74 @@ function GrowPage() {
     navbar: {
       position: 'fixed',
       bottom: 0,
-      left: 0,
-      right: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
       backgroundColor: 'white',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
     },
     navContainer: {
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'space-around',
-      padding: '12px 16px',
-      maxWidth: '412px',
-      margin: '0 auto'
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
     },
     navButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '4px',
-      minWidth: '60px',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer'
+      padding: '8px 16px',
+      transition: 'color 0.2s'
     }
   };
 
-  return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.logo}>
-          <span style={{ fontSize: '24px' }}>🌱</span>
-          <span>PLANTI</span>
-        </div>
-        <div style={styles.headerButtons}>
-          <button 
-            style={styles.iconButton}
-            onClick={() => navigate('/main/setting')}
-          >
-            <Bell size={24} />
-          </button>
-          <button style={styles.iconButton}>
-            <span style={{ fontSize: '20px' }}>☰</span>
-          </button>
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          로딩 중...
         </div>
       </div>
+    );
+  }
 
+  if (!device || !plant) {
+    return (
+      <div style={styles.container}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          기기 정보를 불러올 수 없습니다.
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div style={styles.container}>
+      <style>{fontStyles}</style>
+      <div style={styles.header}>
+        <button 
+          style={styles.backButton}
+          onClick={() => navigate('/main')}
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <div style={styles.headerTitle}>
+          나의 농장
+        </div>
+      </div>
+      
       <div style={styles.content}>
-        <h2 style={styles.deviceTitle}>{device.deviceNickname}</h2>
+        <h2 style={styles.deviceTitle}>
+          {device?.deviceNickname || '로딩 중...'}
+        </h2>
 
         <div style={styles.deviceImage}>
           <div style={styles.deviceImageInner}>
@@ -496,7 +499,7 @@ function GrowPage() {
               <span style={{ fontWeight: 'bold' }}>조명 시간</span>
             </div>
             <span style={{ fontSize: '18px', color: '#6b7280' }}>
-              {showLightingTime ? '▲' : '▶'}
+              {showLightingTime ? '▲' : '▼'}
             </span>
           </div>
 
@@ -519,7 +522,7 @@ function GrowPage() {
                     <span style={{ 
                       fontSize: '8px', 
                       fontWeight: 'bold',
-                      color: '#10b981' 
+                      color: '#0D986A' 
                     }}>
                       I
                     </span>
@@ -539,9 +542,6 @@ function GrowPage() {
                   {isLedOn ? 'ON' : 'OFF'}
                 </span>
               </div>
-              <span style={styles.switchLabel}>
-                {isLedOn ? 'ON' : 'OFF'}
-              </span>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
@@ -555,7 +555,7 @@ function GrowPage() {
                   조명 밝기
                 </span>
                 {isLedOn && (
-                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#10b981' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#0D986A' }}>
                     {ledSettings.intensity}단계
                   </span>
                 )}
@@ -567,7 +567,7 @@ function GrowPage() {
                     onClick={() => handleBrightnessChange(level)}
                     style={{
                       ...styles.brightnessButton,
-                      backgroundColor: ledSettings.intensity === level ? '#10b981' : '#f3f4f6',
+                      backgroundColor: ledSettings.intensity === level ? '#0D986A' : '#f3f4f6',
                       color: ledSettings.intensity === level ? 'white' : '#6b7280'
                     }}
                   >
@@ -577,7 +577,6 @@ function GrowPage() {
               </div>
             </div>
 
-            {/* ✅ 개선된 시간 입력 부분 */}
             <div style={styles.timeInputContainer}>
               <div style={styles.timeInputWrapper}>
                 <label style={styles.timeLabel}>시작 시간</label>
@@ -599,7 +598,6 @@ function GrowPage() {
               </div>
             </div>
 
-            {/* AI 조언 영역 */}
             {isLedOn && (
               <div style={{ 
                 fontSize: '12px', 
@@ -618,7 +616,6 @@ function GrowPage() {
                     lineHeight: '1.6'
                   }}>
                     {(() => {
-                      // **진단:** 과 **조언:** 형식 처리
                       const diagnosisMatch = aiAdvice.match(/\*\*진단:\*\*\s*(.+?)(?=\*\*조언:\*\*|$)/s);
                       const adviceMatch = aiAdvice.match(/\*\*조언:\*\*\s*(.+?)$/s);
                       
@@ -627,48 +624,22 @@ function GrowPage() {
                           <>
                             {diagnosisMatch && (
                               <div style={{ marginBottom: '8px' }}>
-                                <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  gap: '6px',
-                                  marginBottom: '4px'
-                                }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                                   <span style={{ fontSize: '16px' }}>🔍</span>
-                                  <span style={{ 
-                                    fontWeight: 'bold', 
-                                    color: '#15803d',
-                                    fontSize: '13px'
-                                  }}>진단</span>
+                                  <span style={{ fontWeight: 'bold', color: '#15803d', fontSize: '13px' }}>진단</span>
                                 </div>
-                                <div style={{ 
-                                  color: '#374151',
-                                  paddingLeft: '22px',
-                                  fontSize: '12px'
-                                }}>
+                                <div style={{ color: '#374151', paddingLeft: '22px', fontSize: '12px' }}>
                                   {diagnosisMatch[1].trim()}
                                 </div>
                               </div>
                             )}
                             {adviceMatch && (
                               <div>
-                                <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  gap: '6px',
-                                  marginBottom: '4px'
-                                }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                                   <span style={{ fontSize: '16px' }}>💡</span>
-                                  <span style={{ 
-                                    fontWeight: 'bold', 
-                                    color: '#15803d',
-                                    fontSize: '13px'
-                                  }}>조언</span>
+                                  <span style={{ fontWeight: 'bold', color: '#15803d', fontSize: '13px' }}>조언</span>
                                 </div>
-                                <div style={{ 
-                                  color: '#374151',
-                                  paddingLeft: '22px',
-                                  fontSize: '12px'
-                                }}>
+                                <div style={{ color: '#374151', paddingLeft: '22px', fontSize: '12px' }}>
                                   {adviceMatch[1].trim()}
                                 </div>
                               </div>
@@ -676,15 +647,7 @@ function GrowPage() {
                           </>
                         );
                       } else {
-                        // 포맷이 없는 일반 텍스트는 그대로 표시
-                        return (
-                          <div style={{ 
-                            color: '#374151',
-                            fontSize: '12px'
-                          }}>
-                            {aiAdvice}
-                          </div>
-                        );
+                        return <div style={{ color: '#374151', fontSize: '12px' }}>{aiAdvice}</div>;
                       }
                     })()}
                   </div>
@@ -697,15 +660,14 @@ function GrowPage() {
             <button
               onClick={handleLedUpdate}
               style={styles.saveButton}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#0a7a54'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#0D986A'}
             >
               설정 저장
             </button>
           </div>
         </div>
       </div>
-
       <div style={styles.navbar}>
         <div style={styles.navContainer}>
           <button
@@ -728,12 +690,12 @@ function GrowPage() {
             onClick={() => navigate('/community/mypage')}
             style={{ ...styles.navButton, color: '#6b7280' }}>
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
           </button>
           
           <button
             onClick={() => navigate('/main/setting')}
-            style={{ ...styles.navButton, color: '#10b981' }}
+            style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Bell size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
