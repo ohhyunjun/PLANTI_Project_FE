@@ -1,10 +1,12 @@
 // src/pages/MainPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Home, Users, Heart, Pencil, Trash2 } from "lucide-react";
+import { Bell, Home, Users, Heart, Pencil, Trash2, X } from "lucide-react";
 import { registerDevice } from "../api/device";
 import { updatePlant } from "../api/plant";
 import apiClient from "../api/apiClient";
+import seedPotImage from "../assets/seed_pot.png";
+import deleteBtnImage from "../assets/deleteBtn.png";
 
 // Pretendard 폰트 추가
 const fontStyles = `
@@ -225,29 +227,30 @@ function MainPage() {
       flexDirection: 'column',
       paddingBottom: '80px'
     },
-    topSection: {
-      padding: '16px'
+    header: {
+      backgroundColor: 'white',
+      padding: '16px',
+      borderBottomLeftRadius: '20px', // 하단 왼쪽 곡선
+      borderBottomRightRadius: '20px', // 하단 오른쪽 곡선
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // 그림자 효과
+      display: 'flex', // 내부 요소들을 가로로 배치
+      alignItems: 'center', // 세로 중앙 정렬
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      height: '42px'
     },
-    buttonRow: {
+    logo: {
       display: 'flex',
-      gap: '8px',
-      marginBottom: '16px'
-    },
-    plantiButton: {
-      width: '60px',
-      height: '60px',
-      backgroundColor: '#4ade80',
-      color: 'white',
-      borderRadius: '16px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-      padding: '12px',
-      display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
+      gap: '8px', // 아이콘과 텍스트 사이 간격
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#374151' // 약간 진한 회색
+    },
+    topSection: {
+      padding: '16px',
+      paddingBottom: '0px'
     },
     adBannerSection: {
       position: 'relative',
@@ -280,40 +283,49 @@ function MainPage() {
     },
     featureButtonRow: {
       display: 'flex',
-      gap: '8px',
-      overflowX: 'auto',
+      gap: '12px',
       paddingBottom: '8px'
     },
     featureButton: {
-      minWidth: '70px',
+      flex: 1,
       borderRadius: '12px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      padding: '12px 8px',
+      padding: '12px 16px',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
       border: 'none',
       cursor: 'pointer'
     },
     farmSection: {
       flex: 1,
       overflowY: 'auto',
-      padding: '16px'
+      padding: '16px',
+      paddingTop: '0px',
+      margin: '16px',
+      backgroundColor: 'white',
+      borderRadius: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
     },
     farmHeader: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '16px'
+      marginBottom: '16px',
+      borderBottom: '1px solid #d1d5db'
     },
     input: {
       border: '1px solid #d1d5db',
       padding: '8px',
       borderRadius: '8px',
-      fontSize: '14px'
+      fontSize: '14px',
+      width: '100px',
+      flex: 'none'
     },
     addButton: {
-      backgroundColor: '#4ade80',
+      backgroundColor: '#0D986A',
       color: 'white',
       padding: '10px 16px',
       borderRadius: '12px',
@@ -332,64 +344,60 @@ function MainPage() {
       fontWeight: '600'
     },
     deviceCard: {
-      backgroundColor: '#d1fae5',
+      backgroundColor: '#F9F9F9',
       borderRadius: '12px',
-      padding: '16px',
       marginBottom: '12px',
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      transition: 'background-color 0.2s'
+      alignItems: 'center',
+      transition: 'background-color 0.2s',
+      position: 'relative'
     },
     deviceIcon: {
-      fontSize: '48px',
-      marginRight: '16px'
+      width: '94px',
+      height: '97px',
+      marginRight: '16px',
+      objectFit: 'contain',
+      borderRadius: '12px'
     },
     editButton: {
-      backgroundColor: '#fbbf24',
-      color: 'white',
-      padding: '12px',
-      borderRadius: '10px',
-      border: 'none',
+      background: 'none', 
+      border: 'none',  
       cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600',
-      minWidth: '48px',
-      minHeight: '48px',
+      padding: '0', 
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     },
     deleteButton: {
-      backgroundColor: '#ef4444',
-      color: 'white',
-      padding: '12px',
-      borderRadius: '10px',
+      position: 'absolute', 
+      top: '16px',          
+      right: '16px',   
+      background: 'none',
       border: 'none',
       cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600',
-      minWidth: '48px',
-      minHeight: '48px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      padding: '0',
+      width: '20px',
+      height: '20px'
     },
     navbar: {
       position: 'fixed',
       bottom: 0,
-      left: 0,
-      right: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
       backgroundColor: 'white',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
     },
     navContainer: {
-      maxWidth: '412px',
-      margin: '0 auto',
       display: 'flex',
       justifyContent: 'space-around',
-      padding: '12px 0'
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
     },
     navButton: {
       backgroundColor: 'transparent',
@@ -407,19 +415,48 @@ function MainPage() {
   return (
     <div style={styles.container}>
       <style>{fontStyles}</style>
-      
-      <div style={styles.topSection}>
-        <div style={styles.buttonRow}>
+      <div style={styles.header}>
+        <div style={styles.logo}>
+          <span style={{ fontSize: '24px', color: '#4ade80' }}>🌱</span>
+          <span>PLANTI</span>
+        </div>
+      </div>
+      {/* 하단 네비게이션 바 */}
+      <div style={styles.navbar}>
+        <div style={styles.navContainer}>
           <button
-            onClick={() => navigate("/main")}
-            style={styles.plantiButton}
-            onMouseEnter={e => e.target.style.backgroundColor = '#4ade80'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#42cc75ff'}
+            onClick={() => navigate('/main')}
+            style={{ ...styles.navButton, color: '#10b981' }}
           >
-            <span style={{ fontSize: '24px' }}>🌱</span>
-            <span style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px' }}>PLANTI</span>
+            <Home size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/community')}
+            style={{ ...styles.navButton, color: '#6b7280' }}
+          >
+            <Users size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate('/community/mypage')}
+            style={{ ...styles.navButton, color: '#6b7280' }}>
+            <Heart size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/main/setting')}
+            style={{ ...styles.navButton, color: '#6b7280' }}
+          >
+            <Bell size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
           </button>
         </div>
+      </div>
+      <div style={styles.topSection}>
 
         {/* 광고 배너 */}
         <div 
@@ -455,21 +492,12 @@ function MainPage() {
         {/* 기능 버튼들 */}
         <div style={styles.featureButtonRow} className="feature-scroll">
           <button
-            onClick={() => alert('My Farm')}
-            style={styles.featureButton}
-            className="feature-button"
-          >
-            <span style={{ fontSize: '24px', marginBottom: '4px' }}>🌿</span>
-            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>My Farm</span>
-          </button>
-
-          <button
             onClick={() => navigate("/main/diary")}
             style={styles.featureButton}
             className="feature-button"
           >
-            <span style={{ fontSize: '24px', marginBottom: '4px' }}>📓</span>
-            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Diary</span>
+            <span style={{ fontSize: '24px'}}>📓</span>
+            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>다이어리</span>
           </button>
 
           <button
@@ -478,25 +506,7 @@ function MainPage() {
             className="feature-button"
           >
             <span style={{ fontSize: '24px', marginBottom: '4px' }}>🎨</span>
-            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>AI Photo</span>
-          </button>
-
-          <button
-            onClick={() => alert('Avatar')}
-            style={styles.featureButton}
-            className="feature-button"
-          >
-            <span style={{ fontSize: '24px', marginBottom: '4px' }}>👤</span>
-            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Avatar</span>
-          </button>
-
-          <button
-            onClick={() => navigate("/main/community")}
-            style={styles.featureButton}
-            className="feature-button"
-          >
-            <span style={{ fontSize: '24px', marginBottom: '4px' }}>👥</span>
-            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Community</span>
+            <span style={{ fontWeight: 'bold', fontSize: '12px' }}>AI 사진</span>
           </button>
         </div>
       </div>
@@ -511,7 +521,7 @@ function MainPage() {
                 type="text"
                 value={inputCode}
                 onChange={(e) => setInputCode(e.target.value)}
-                placeholder="기기 코드를 입력하세요"
+                placeholder="기기 코드 입력"
                 style={styles.input}
               />
               <button onClick={addDevice} style={styles.addButton}>
@@ -557,19 +567,35 @@ function MainPage() {
                     textAlign: 'left',
                     border: 'none',
                     background: 'none',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    paddingLeft: '0px'
                   }}
                 >
-                  <div style={styles.deviceIcon}>🌿</div>
+                  <img 
+                    src={seedPotImage} 
+                    alt="Device Icon"
+                    style={styles.deviceIcon} 
+                  />
                   <div>
-                    <p style={{ fontWeight: 'bold', fontSize: '18px' }}>{device.deviceNickname}</p>
-                    <p style={{ fontSize: '14px', color: '#4b5563', marginTop: '4px' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '20px', marginTop: '20px' }}>{device.deviceNickname}</p>
+                    <p style={{ fontSize: '14px', color: '#a5a7abff', margin:'0px' }}>
                       시리얼: {device.serialNumber}
                     </p>
                     {device.plant ? (
-                      <p style={{ fontSize: '16px', marginTop: '6px', fontWeight: '500' }}>
-                        🌱 {device.plant.name} ({device.plant.species})
-                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', marginTop:'5px' }}>
+                        <p style={{ fontSize: '16px', fontWeight: '500', margin: '0px'}}>
+                          🌱 {device.plant.name} ({device.plant.species})
+                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // 카드 전체가 눌리는 것을 방지
+                            editPlantName(device);
+                          }} 
+                          style={styles.editButton}
+                        >
+                          <Pencil size={19} color="#9D9D9D" />
+                        </button>
+                      </div>
                     ) : (
                       <div style={{ marginTop: '6px' }}>
                         <p style={{ fontSize: '16px', color: '#ea580c', fontWeight: '700' }}>
@@ -581,58 +607,26 @@ function MainPage() {
                       </div>
                     )}
                   </div>
+                </button> 
+                {/* ▲▲▲ 1. 큰 버튼을 여기서 닫아줍니다. */}
+                
+                {/* ▼▼▼ 2. 삭제 버튼을 바깥으로 이동시킵니다. */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 전체가 눌리는 것을 방지
+                    deleteDevice(device.serialNumber);
+                  }} 
+                  style={styles.deleteButton}
+                >
+                  <img src={deleteBtnImage} alt="삭제" style={{ width: '100%', height: '100%' }} />
                 </button>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '8px' }}>
-                  {device.plant && (
-                    <button onClick={() => editPlantName(device)} style={styles.editButton}>
-                      <Pencil size={20} strokeWidth={2.5} color="white" />
-                    </button>
-                  )}
-                  <button onClick={() => deleteDevice(device.serialNumber)} style={styles.deleteButton}>
-                    <Trash2 size={20} strokeWidth={2.5} color="white" />
-                  </button>
-                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* 하단 네비게이션 바 */}
-      <div style={styles.navbar}>
-        <div style={styles.navContainer}>
-          <button
-            onClick={() => navigate('/main')}
-            style={{ ...styles.navButton, color: '#10b981' }}
-          >
-            <Home size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/main/community')}
-            style={{ ...styles.navButton, color: '#6b7280' }}
-          >
-            <Users size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
-          </button>
-          
-          <button 
-            onClick={() => navigate('/community/mypage')}
-            style={{ ...styles.navButton, color: '#6b7280' }}>
-            <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/main/setting')}
-            style={{ ...styles.navButton, color: '#6b7280' }}
-          >
-            <Bell size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 }
