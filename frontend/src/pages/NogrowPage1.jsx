@@ -27,7 +27,7 @@ const plantsByCategory = {
     { id: "strawberry", name: "Strawberry", koreanName: "딸기", icon: "🍓" },
     { id: "orange", name: "Orange", koreanName: "오렌지", icon: "🍊" },
     { id: "lemon", name: "Lemon", koreanName: "레몬", icon: "🍋" },
-    { id: "tomato", name: "Tomato", koreanName: "토마토", icon: "🍅" },
+    { id: 1, name: "Tomato", koreanName: "토마토", icon: "🍅" },
     { id: "blueberry", name: "Blueberry", koreanName: "블루베리", icon: "🫐" },
     { id: "apple", name: "Apple", koreanName: "사과", icon: "🍎" }
   ],
@@ -39,6 +39,7 @@ const plantsByCategory = {
     { id: "succulent", name: "Succulent", koreanName: "다육이", icon: "🍀" }
   ],
   foliage: [
+    { id: 2, name: "Lettuce", koreanName: "상추", icon: "🥬" },
     { id: "monstera", name: "Monstera", koreanName: "몬스테라", icon: "🌿" },
     { id: "pothos", name: "Pothos", koreanName: "스킨답서스", icon: "🍃" },
     { id: "fern", name: "Fern", koreanName: "고사리", icon: "🌾" },
@@ -100,7 +101,7 @@ function NogrowPage1() {
 
     const plantData = {
       name: plantName,
-      species: selectedPlant.name,
+      speciesId: selectedPlant.id,
       plantedAt: new Date().toISOString(),
       stage: 'SEED',
       serialNumber: serialNumber
