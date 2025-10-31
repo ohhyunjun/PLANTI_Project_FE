@@ -132,7 +132,7 @@ function MainPage() {
     if (!plant) return seedPotImage;
     
     const stage = plant.plantStage;
-    const species = plant.speciesName?.toLowerCase() || '';
+    const species = plant.species?.toLowerCase() || '';
     
     switch (stage) {
       case 'SEED':
