@@ -115,12 +115,12 @@ function GrowPage() {
     }
   }, [serialNumber, loadSensorData]);
 
+  // 페이지 로딩 시 LED가 ON이면 AI 조언 호출
   useEffect(() => {
-    if (serialNumber && !loading && ledSettings.intensity > 0) {
+    if (serialNumber && !loading && isLedOn) {
       fetchAiAdvice();
     }
-  }, [serialNumber, loading, ledSettings.intensity, fetchAiAdvice]);
-
+  }, [serialNumber, loading, isLedOn, fetchAiAdvice]);
 
   const handleLedUpdate = async () => {
     try {
