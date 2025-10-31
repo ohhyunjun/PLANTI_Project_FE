@@ -8,6 +8,14 @@ import apiClient from "../api/apiClient";
 import seedPotImage from "../assets/seed_pot.png";
 import deleteBtnImage from "../assets/deleteBtn.png";
 
+// 식물 성장 단계별 이미지 import (tomato 폴더 내)
+import germinationTomato from "../assets/tomato/GERMINATION_tomato.png";
+import matureTomato from "../assets/tomato/MATURE_tomato.png";
+import fruitTomato from "../assets/tomato/FRUIT_tomato.png";
+
+import germinationLettuce from "../assets/lettuce/GERMINATION_lettuce.png";
+import matureLettuce from "../assets/lettuce/MATURE_lettuce.png";
+
 // Pretendard 폰트 추가
 const fontStyles = `
 @font-face {
@@ -117,6 +125,42 @@ function MainPage() {
     imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=400&fit=crop',
     linkUrl: 'https://www.naver.com',
     altText: '네이버 식물 광고'
+  };
+
+  // 식물 성장 단계에 따른 이미지 반환 함수
+  const getPlantImage = (plant) => {
+    if (!plant) return seedPotImage;
+    
+    const stage = plant.plantStage;
+    const species = plant.speciesName?.toLowerCase() || '';
+    
+    switch (stage) {
+      case 'SEED':
+        return seedPotImage;
+      case 'GERMINATION':
+        if (species.includes('tomato') || species.includes('토마토')) {
+          return germinationTomato;
+        }
+        if (species.includes('lettuce') || species.includes('상추')) {
+          return germinationLettuce;
+        }
+        return seedPotImage;
+      case 'MATURE':
+        if (species.includes('tomato') || species.includes('토마토')) {
+          return matureTomato;
+        }
+        if (species.includes('lettuce') || species.includes('상추')) {
+          return matureLettuce;
+        }
+        return seedPotImage;
+      case 'FRUIT':
+        if (species.includes('tomato') || species.includes('토마토')) {
+          return fruitTomato;
+        }
+        return seedPotImage;
+      default:
+        return seedPotImage;
+    }
   };
 
   useEffect(() => {
@@ -572,8 +616,8 @@ function MainPage() {
                   }}
                 >
                   <img 
-                    src={seedPotImage} 
-                    alt="Device Icon"
+                    src={getPlantImage(device.plant)} 
+                    alt="Plant Icon"
                     style={styles.deviceIcon} 
                   />
                   <div>
