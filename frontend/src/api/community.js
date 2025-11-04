@@ -1,5 +1,10 @@
 import apiClient from './apiClient'; 
 
+// 현재 로그인한 사용자 정보 가져오기
+export const getCurrentUser = () => {
+    return apiClient.get('/api/auth/me');
+};
+
 /**
  * FormData 변환을 API 함수에서 처리
  */
@@ -65,4 +70,24 @@ export const deletePost = (postId) => {
 
 export const createComment = (postId, commentData) => {
     return apiClient.post(`/api/posts/${postId}/comments`, commentData);
+};
+
+//좋아요 api
+/**
+ * 게시글 좋아요 토글
+ * @param {number} postId - 게시글 ID
+ * @returns {Promise} { postId, userId, liked, likesCount }
+ */
+export const togglePostLike = (postId) => {
+    return apiClient.post(`/api/posts/${postId}/likes`);
+};
+
+// 댓글 좋아요 토글 API (향후 사용 가능)
+/**
+ * 댓글 좋아요 토글
+ * @param {number} commentId - 댓글 ID
+ * @returns {Promise} { commentId, userId, liked, likesCount }
+ */
+export const toggleCommentLike = (commentId) => {
+    return apiClient.post(`/api/comments/${commentId}/likes`);
 };
