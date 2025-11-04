@@ -1,275 +1,686 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Home, Users, User, Bell, PenSquare } from "lucide-react"; // ✅ User, PenSquare 추가
-import { getPosts } from "../api/community";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Home, Users, Heart, Bell, ChevronDown, Search, ChevronLeft } from "lucide-react";
+import { getPosts, togglePostLike } from "../api/community";
 
-const Icon = ({ name, className = "" }) => {
-  const icons = {
-    back: "←", bell: "🔔", menu: "☰", search: "🔍",
-    comment: "💬", repost: "🔁", like: "❤", share: "↗",
-    recommend: "⭐", friend: "👥", more: "..."
-  };
-  return <span className={`text-xl ${className}`}>{icons[name] || name}</span>;
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Thin.woff') format('woff');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Light.woff') format('woff');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Medium.woff') format('woff');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraBold.woff') format('woff');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Black.woff') format('woff');
+    font-weight: 900;
+    font-display: swap;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
+
+const SortDropdown = ({ value, onChange, options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          backgroundColor: 'white',
+          border: '1px solid #d1d5db',
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#374151',
+          cursor: 'pointer',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#9ca3af';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#d1d5db';
+        }}
+      >
+        <span>{value}</span>
+        <ChevronDown 
+          size={16} 
+          style={{ 
+            transition: 'transform 0.2s',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+          }}
+        />
+      </button>
+      
+      {isOpen && (
+        <>
+          <div 
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            right: 0,
+            marginTop: '8px',
+            width: '120px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            zIndex: 20,
+            overflow: 'hidden'
+          }}>
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  border: 'none',
+                  backgroundColor: value === option.value ? '#f0fdf4' : 'white',
+                  color: value === option.value ? '#0D986A' : '#374151',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (value !== option.value) {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
-const PostCard = ({ post, nav }) => (
-    <article className="post-card bg-gray-900 text-gray-200 p-3 border-b border-gray-800">
-        <div className="flex justify-between items-start mb-2">
-            <div 
-                className="flex items-center flex-grow cursor-pointer"
-                onClick={() => nav(`/main/community/post/${post.id}`)}
-            >
-                <img
-                    className="w-8 h-8 rounded-full object-cover mr-2 border border-green-500"
-                    src="/default-avatar-dark.png"
-                    alt={`${post.authorUsername}님의 아바타`}
-                />
-                <div className="flex items-center space-x-1">
-                    <span className="text-sm font-semibold text-white hover:text-green-400">
-                        @{post.authorUsername || "알 수 없는 사용자"}
-                    </span>
-                    <span className="text-xs text-gray-500">·</span>
-                    <span className="text-xs text-gray-500">
-                        {new Date(post.createdAt).toLocaleDateString('ko-KR')}
-                    </span>
-                </div>
-            </div>
-        </div>
+// ✅ 방안 2: 작은 썸네일 버전 PostCard (조회수 제거)
+const PostCard = ({ post, nav, onLikeToggle }) => {
+  const [isLiked, setIsLiked] = useState(post.liked || false);
+  const [likeCount, setLikeCount] = useState(post.likesCount || 0);
+  const [isLiking, setIsLiking] = useState(false);
 
-        <div 
-            className="cursor-pointer"
-            onClick={() => nav(`/main/community/post/${post.id}`)}
-        >
-            {post.title && (
-                <h3 className="text-lg font-bold text-gray-200 mb-2">
-                    {post.title}
-                </h3>
-            )}
-            
-            <div className="text-gray-300 mb-2 whitespace-pre-wrap text-sm">
-                {post.content}
-            </div>
-            
-            {post.files && post.files.length > 0 && (
-                <div className="post-media mb-3 rounded-lg overflow-hidden border border-gray-700">
-                    <img 
-                        src={post.files[0].fileUrl}
-                        alt="게시물 이미지" 
-                        style={{ width: "100%", height: "200px", objectFit: "cover" }} 
-                        onError={(e) => {
-                            console.error("이미지 로드 실패:", post.files[0].fileUrl);
-                            e.target.style.display = 'none';
-                        }}
-                    />
-                </div>
-            )}
-        </div>
-
-        <div className="flex space-x-4 text-gray-400">
-            <button className="flex items-center space-x-1 hover:text-blue-400 transition-colors">
-                <Icon name="comment" className="text-lg"/>
-                <span className="text-xs">{post.comments?.length ?? 0}</span>
-            </button>
-            <button className="flex items-center space-x-1 hover:text-green-400 transition-colors">
-                <Icon name="repost" className="text-lg"/>
-                <span className="text-xs">{post.repostCount ?? 0}</span>
-            </button>
-            <button className="flex items-center space-x-1 hover:text-red-400 transition-colors">
-                <Icon name="like" className="text-lg"/>
-                <span className="text-xs">{post.likeCount ?? 0}</span>
-            </button>
-            <button className="flex items-center space-x-1 hover:text-gray-200 transition-colors">
-                <Icon name="share" className="text-lg"/>
-                <span className="text-xs">공유</span>
-            </button>
-        </div>
-    </article>
-);
-
-export default function CommunityStartPage() {
-  const nav = useNavigate();
-  const location = useLocation();
-
-  const [explore, setExplore] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const loadExplore = async () => {
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
+    if (isLiking) return;
+    
+    const previousLiked = isLiked;
+    const previousCount = likeCount;
+    
+    setIsLiked(!isLiked);
+    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+    setIsLiking(true);
+    
     try {
-      setLoading(true);
-      const response = await getPosts();
-      setExplore(Array.isArray(response.data) ? response.data : []);
-      console.log("게시글 로드:", response.data);
-    } catch (e) {
-      console.error("피드 불러오기 실패:", e);
-      setExplore([]); 
+      const response = await togglePostLike(post.id);
+      setIsLiked(response.data.liked);
+      setLikeCount(response.data.likesCount);
+      
+      if (onLikeToggle) {
+        onLikeToggle(post.id, response.data.liked, response.data.likesCount);
+      }
+    } catch (error) {
+      console.error('좋아요 토글 실패:', error);
+      setIsLiked(previousLiked);
+      setLikeCount(previousCount);
+      
+      if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.');
+      } else if (error.response?.status === 404) {
+        alert('게시물을 찾을 수 없습니다.');
+      } else {
+        alert('좋아요 처리 중 오류가 발생했습니다.');
+      }
     } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadExplore();
-  }, []);
-
-  const onSearch = (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    nav(`/main/community/search?keyword=${query}`);
-  };
-
-  const styles = {
-    navbar: {
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: 'white',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
-    },
-    navContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      padding: '12px 16px',
-      maxWidth: '412px',
-      margin: '0 auto'
-    },
-    navButton: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '4px',
-      minWidth: '60px',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer'
+      setIsLiking(false);
     }
   };
 
   return (
-    <div className="community min-h-screen bg-gray-900 max-w-sm mx-auto shadow-2xl pb-16">
-      <header className="sticky top-0 bg-gray-900 p-3 border-b border-gray-800 z-20">
-        <div className="flex justify-center mb-3">
-          <h1 className="text-2xl font-bold text-white tracking-wider">Community</h1>
-        </div>
+    <div
+      onClick={() => nav(`/main/community/post/${post.id}`)}
+      style={{
+        backgroundColor: 'white',
+        padding: '16px',
+        marginBottom: '12px',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        border: '1px solid #f3f4f6',
+        display: 'flex',
+        gap: '12px'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      {/* 좌측: 텍스트 영역 */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* 제목 */}
+        <h3 style={{
+          fontSize: '16px',
+          fontWeight: '700',
+          color: '#111827',
+          marginBottom: '8px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'left'
+        }}>
+          {post.title || "제목 없음"}
+        </h3>
         
-        <div className="flex justify-center space-x-5 mb-3">
-          <button className="text-xl text-yellow-300 hover:text-yellow-400 transition-colors">
-            <Icon name="bell"/>
-          </button>
+        {/* 내용 미리보기 */}
+        <p style={{
+          fontSize: '14px',
+          color: '#6b7280',
+          marginBottom: '12px',
+          lineHeight: '1.5',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textAlign: 'left'
+        }}>
+          {post.content || "내용 없음"}
+        </p>
+        
+        {/* 하단 정보 바 - 조회수 제거 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '13px',
+          color: '#9ca3af'
+        }}>
+          {/* 좋아요 버튼 */}
           <button
-            className="text-xl text-white hover:text-green-500 transition-colors"
-            onClick={() => nav("/main/setting")}
+            onClick={handleLikeClick}
+            disabled={isLiking}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: isLiking ? 'not-allowed' : 'pointer',
+              padding: '4px 8px',
+              marginLeft: '-8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s',
+              color: isLiked ? '#0D986A' : '#9ca3af',
+              opacity: isLiking ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!isLiking) {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
-            <Icon name="menu"/>
+            <Heart 
+              size={16} 
+              fill={isLiked ? '#0D986A' : 'none'}
+              color={isLiked ? '#0D986A' : '#9ca3af'}
+              style={{
+                transition: 'all 0.2s',
+                transform: isLiking ? 'scale(0.9)' : 'scale(1)'
+              }}
+            />
+            <span style={{ 
+              fontWeight: isLiked ? '600' : '400',
+              transition: 'all 0.2s'
+            }}>
+              {likeCount}
+            </span>
           </button>
+          
+          {/* 댓글 수 */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            💬 {post.commentCount || 0}
+          </span>
         </div>
-
-        <form className="flex items-center space-x-2" onSubmit={onSearch}>
-          <input
-            type="text"
-            placeholder="아이디 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 p-2 text-sm bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+      </div>
+      
+      {/* 우측: 작은 썸네일 (이미지가 있을 때만) */}
+      {post.files && post.files.length > 0 && (
+        <div style={{
+          width: '80px',
+          height: '80px',
+          flexShrink: 0,
+          borderRadius: '8px',
+          overflow: 'hidden',
+          backgroundColor: '#f3f4f6'
+        }}>
+          <img 
+            src={post.files[0].fileUrl}
+            alt="썸네일" 
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
           />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function CommunityStartPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('최신순');
+
+  const sortOptions = [
+    { value: '최신순', label: '최신순' },
+    { value: '인기순', label: '인기순' }
+  ];
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        const response = await getPosts();
+        setPosts(response.data);
+      } catch (error) {
+        console.error('게시물 로딩 실패:', error);
+        alert('게시물을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  // 정렬 변경 시 게시물 재정렬 (조회순 제거)
+  useEffect(() => {
+    const sortedPosts = [...posts];
+    
+    switch(sortBy) {
+      case '최신순':
+        sortedPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case '인기순':
+        sortedPosts.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+        break;
+      default:
+        break;
+    }
+    
+    setPosts(sortedPosts);
+  }, [sortBy]);
+
+  // 좋아요 토글 시 posts 배열 업데이트
+  const handleLikeToggle = (postId, liked, likesCount) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { ...post, liked, likesCount }
+          : post
+      )
+    );
+  };
+
+  const styles = {
+    container: {
+      maxWidth: '412px',
+      margin: '0 auto',
+      backgroundColor: '#f9fafb',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      paddingBottom: '80px'
+    },
+    header: {
+      backgroundColor: 'white',
+      padding: '16px',
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      height: '42px'
+    },
+    logo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#374151'
+    },
+    filterHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px',
+      paddingBottom: '0px',
+      backgroundColor: '#f9fafb'
+    },
+    contentSection: {
+      flex: 1,
+      overflowY: 'auto',
+      padding: '16px',
+      paddingTop: '16px'
+    },
+    floatingButton: {
+      position: 'fixed',
+      bottom: '100px',
+      right: 'calc(50% - 206px + 16px)',
+      width: '56px',
+      height: '56px',
+      borderRadius: '50%',
+      backgroundColor: '#0D986A',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 4px 12px rgba(13, 152, 106, 0.3)',
+      zIndex: 50,
+      transition: 'all 0.2s'
+    },
+    navbar: {
+      position: 'fixed',
+      bottom: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
+      backgroundColor: 'white',
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
+    },
+    navContainer: {
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
+    },
+    navButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '8px 16px',
+      transition: 'color 0.2s'
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <style>{fontStyles}</style>
+      
+      {/* 상단바 */}
+      <div style={styles.header}>
+        <div style={styles.logo}>
           <button 
-            className="p-2 bg-gray-800 border border-gray-700 rounded-lg text-green-400 hover:bg-gray-700 transition-colors" 
-            type="submit"
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center'
+            }}
           >
-            <Icon name="search" className="text-xl"/>
+            <ChevronLeft size={24} />
           </button>
-        </form>
-      </header>
-
-      <nav className="flex justify-around text-center py-2 border-b border-gray-800 bg-gray-900">
-        <Link
-            className={`flex flex-col items-center px-3 py-1 text-sm font-medium transition-colors ${
-                location.pathname === "/main/community"
-                    ? "text-green-400 border-b-2 border-green-400"
-                    : "text-gray-500 hover:text-gray-300"
-            }`}
-            to="/main/community"
+          <span>커뮤니티</span>
+        </div>
+        <button
+          onClick={() => navigate('/main/community/search')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            display: 'flex',
+            alignItems: 'center'
+          }}
         >
-            <Icon name="recommend" className="text-base mb-0.5" />
-            추천
-        </Link>
+          <Search size={20} color="#0D986A" />
+        </button>
+      </div>
+
+      {/* 필터 헤더 */}
+      <div style={styles.filterHeader}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+          <h2 style={{ 
+            fontSize: '18px', 
+            fontWeight: '700', 
+            color: '#111827',
+            margin: 0
+          }}>
+            전체
+          </h2>
+          <span style={{ fontSize: '14px', color: '#9ca3af' }}>
+            {posts.length}
+          </span>
+        </div>
         
-        <Link
-            className={`flex flex-col items-center px-3 py-1 text-sm font-medium transition-colors ${
-                location.pathname.includes("/following")
-                    ? "text-green-400 border-b-2 border-green-400"
-                    : "text-gray-500 hover:text-gray-300"
-            }`}
-            to="/main/community/following"
-        >
-            <Icon name="friend" className="text-base mb-0.5"/>
-            팔로잉
-        </Link>
-      </nav>
+        <SortDropdown
+          value={sortBy}
+          onChange={setSortBy}
+          options={sortOptions}
+        />
+      </div>
 
-      <main className="comm-feed pt-3 pb-12">
+      {/* 메인 컨텐츠 */}
+      <div style={styles.contentSection}>
         {loading && (
-          <p className="text-center py-6 text-green-500 animate-pulse text-sm">
-             🌱 피드를 불러오는 중...
-          </p>
-        )}
-        {!loading && explore.length === 0 && (
-          <p className="text-center py-6 text-gray-500 text-sm">
-            게시물이 없습니다.
-          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '48px 0',
+            color: '#0D986A'
+          }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              border: '3px solid #d1fae5',
+              borderTop: '3px solid #0D986A',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          </div>
         )}
         
-        {!loading && explore.map((post) => (
-            <PostCard key={post.id} post={post} nav={nav} />
+        {!loading && posts.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '48px 0',
+            color: '#9ca3af'
+          }}>
+            게시물이 없습니다.
+          </div>
+        )}
+        
+        {!loading && posts.map((post) => (
+          <PostCard 
+            key={post.id} 
+            post={post} 
+            nav={navigate}
+            onLikeToggle={handleLikeToggle}
+          />
         ))}
-      </main>
+      </div>
 
-      {/* ✅ 수정된 네비게이션 바 */}
+      {/* 글작성 FAB */}
+      <button
+        onClick={() => navigate('/community/create')}
+        style={styles.floatingButton}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.backgroundColor = '#0a7a56';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.backgroundColor = '#0D986A';
+        }}
+      >
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="white" 
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+        </svg>
+      </button>
+
+      {/* 하단 네비게이션 바 */}
       <div style={styles.navbar}>
         <div style={styles.navContainer}>
           <button
-            onClick={() => nav('/main')}
+            onClick={() => navigate('/main')}
             style={{ 
               ...styles.navButton, 
-              color: location.pathname === '/main' ? '#10b981' : '#6b7280' 
+              color: location.pathname === '/main' ? '#0D986A' : '#6b7280' 
             }}
           >
             <Home size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
           </button>
           
-          {/* ✅ navigate를 nav로 수정 */}
-          <button 
-            onClick={() => nav('/community/create')}
+          <button
+            onClick={() => navigate('/main/community')}
             style={{ 
               ...styles.navButton, 
-              color: location.pathname === '/community/create' ? '#10b981' : '#6b7280' 
+              color: location.pathname.includes('/community') ? '#0D986A' : '#6b7280' 
             }}
           >
-            <PenSquare size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>작성</span>
+            <Users size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
-          {/* ✅ Heart를 User로 변경, 활성화 색상 로직 추가 */}
           <button 
-            onClick={() => nav('/community/mypage')}
+            onClick={() => navigate('/community/mypage')}
             style={{ 
               ...styles.navButton, 
-              color: location.pathname === '/community/mypage' ? '#10b981' : '#6b7280' 
+              color: location.pathname === '/community/mypage' ? '#0D986A' : '#6b7280' 
             }}
           >
-            <User size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+            <Heart size={24} strokeWidth={2} />
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
           </button>
           
           <button
-            onClick={() => nav('/main/setting')}
+            onClick={() => navigate('/main/setting')}
             style={{ 
               ...styles.navButton, 
-              color: location.pathname === '/main/setting' ? '#10b981' : '#6b7280' 
+              color: location.pathname === '/main/setting' ? '#0D986A' : '#6b7280' 
             }}
           >
             <Bell size={24} strokeWidth={2} />
@@ -277,6 +688,14 @@ export default function CommunityStartPage() {
           </button>
         </div>
       </div>
+
+      {/* 스피너 애니메이션 */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
