@@ -3,9 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, Bell, Home, Users, Heart } from "lucide-react";
 import apiClient from "../api/apiClient";
 
-// 백엔드 API: http://localhost:8080
-// apiClient는 VITE_BACKEND_API_BASE_URL 환경변수를 사용합니다
-
 // Pretendard 폰트 추가
 const fontStyles = `
 @font-face {
@@ -41,6 +38,187 @@ const fontStyles = `
 }
 `;
 
+// 🎨 스타트페이지 스타일 PostCard (썸네일 작게)
+const PostCard = ({ post, onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        backgroundColor: 'white',
+        padding: '16px',
+        marginBottom: '12px',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        border: '1px solid #f3f4f6',
+        display: 'flex',
+        gap: '12px'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      {/* 좌측: 텍스트 영역 */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* 제목 */}
+        <h3 style={{
+          fontSize: '16px',
+          fontWeight: '700',
+          color: '#111827',
+          marginBottom: '8px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'left'
+        }}>
+          {post.title || "제목 없음"}
+        </h3>
+        
+        {/* 내용 미리보기 */}
+        <p style={{
+          fontSize: '14px',
+          color: '#6b7280',
+          marginBottom: '12px',
+          lineHeight: '1.5',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textAlign: 'left'
+        }}>
+          {post.content || "내용 없음"}
+        </p>
+        
+        {/* 하단 정보 바 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '13px',
+          color: '#9ca3af'
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Heart 
+              size={16} 
+              fill={post.liked ? '#0D986A' : 'none'} 
+              color={post.liked ? '#0D986A' : '#9ca3af'} 
+            />
+            {post.likesCount || 0}
+          </span>
+          <span>💬 {post.commentCount || 0}</span>
+          <span style={{ marginLeft: 'auto' }}>
+            {new Date(post.createdAt).toLocaleDateString('ko-KR', { 
+              month: 'short', 
+              day: 'numeric' 
+            })}
+          </span>
+        </div>
+      </div>
+      
+      {/* 우측: 썸네일 이미지 (있는 경우에만) */}
+      {post.files && post.files.length > 0 && (
+        <div style={{
+          width: '80px',
+          height: '80px',
+          flexShrink: 0,
+          borderRadius: '8px',
+          overflow: 'hidden',
+          backgroundColor: '#f3f4f6'
+        }}>
+          <img 
+            src={post.files[0].fileUrl}
+            alt=""
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+            onError={(e) => {
+              e.target.parentElement.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 🎨 댓글 카드 (게시글 제목 포함)
+const CommentCard = ({ comment, onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        backgroundColor: 'white',
+        padding: '16px',
+        marginBottom: '12px',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        border: '1px solid #f3f4f6'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      {/* 게시글 제목 */}
+      <div style={{ 
+        fontSize: '13px', 
+        color: '#0D986A', 
+        fontWeight: '600', 
+        marginBottom: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px'
+      }}>
+        📌 {comment.postTitle}
+      </div>
+      
+      {/* 댓글 내용 */}
+      <p style={{ 
+        fontSize: '14px', 
+        color: '#374151', 
+        marginBottom: '12px', 
+        lineHeight: '1.6',
+        display: '-webkit-box',
+        WebkitLineClamp: 3,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden'
+      }}>
+        {comment.content}
+      </p>
+      
+      {/* 날짜 */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px', 
+        fontSize: '12px', 
+        color: '#9ca3af' 
+      }}>
+        <span>
+          {new Date(comment.createdAt).toLocaleDateString('ko-KR', { 
+            month: 'short', 
+            day: 'numeric' 
+          })}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 function CommunityMyPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,16 +240,19 @@ function CommunityMyPage() {
     fetchData();
   }, [activeTab]);
 
-  // API: GET http://localhost:8080/api/auth/me
+  // 사용자 정보 가져오기
   const fetchUserInfo = async () => {
     try {
       const response = await apiClient.get('/api/auth/me');
       setUserInfo({
         username: response.data.username || 'myusername',
-        nickname: response.data.nickname || '사용자'
       });
     } catch (error) {
       console.error("사용자 정보를 불러오는 데 실패했습니다.", error);
+      if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.');
+        navigate('/auth/login');
+      }
     }
   };
 
@@ -98,52 +279,43 @@ function CommunityMyPage() {
     }
   };
 
-  // API: GET http://localhost:8080/api/community/my-posts
   const fetchMyPosts = async () => {
     try {
-      const response = await apiClient.get('/api/community/my-posts');
+      const response = await apiClient.get('/api/posts/my');
       setMyPosts(response.data);
     } catch (error) {
       console.error("내 게시물을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
         alert('로그인이 필요합니다.');
         navigate('/auth/login');
-      } else {
-        alert('게시물을 불러오는데 실패했습니다.');
       }
       setMyPosts([]);
     }
   };
 
-  // API: GET http://localhost:8080/api/community/my-comments
   const fetchMyComments = async () => {
     try {
-      const response = await apiClient.get('/api/community/my-comments');
+      const response = await apiClient.get('/api/comments/my');
       setMyComments(response.data);
     } catch (error) {
       console.error("내 댓글을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
         alert('로그인이 필요합니다.');
         navigate('/auth/login');
-      } else {
-        alert('댓글을 불러오는데 실패했습니다.');
       }
       setMyComments([]);
     }
   };
 
-  // API: GET http://localhost:8080/api/community/liked-posts
   const fetchLikedPosts = async () => {
     try {
-      const response = await apiClient.get('/api/community/liked-posts');
+      const response = await apiClient.get('/api/posts/liked');
       setLikedPosts(response.data);
     } catch (error) {
       console.error("좋아요한 게시물을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
         alert('로그인이 필요합니다.');
         navigate('/auth/login');
-      } else {
-        alert('좋아요한 게시물을 불러오는데 실패했습니다.');
       }
       setLikedPosts([]);
     }
@@ -174,199 +346,54 @@ function CommunityMyPage() {
     switch (activeTab) {
       case "posts":
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
             {myPosts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 작성한 글이 없습니다.
               </div>
             ) : (
               myPosts.map((post) => (
-                <div
-                  key={post.id}
+                <PostCard 
+                  key={post.id} 
+                  post={post}
                   onClick={() => navigate(`/main/community/post/${post.id}`)}
-                  style={{
-                    backgroundColor: 'white',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    border: '1px solid #f3f4f6'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-                    {post.title || "제목 없음"}
-                  </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#6b7280', 
-                    marginBottom: '12px', 
-                    lineHeight: '1.5',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {post.content || "내용 없음"}
-                  </p>
-                  {post.files && post.files.length > 0 && (
-                    <img 
-                      src={post.files[0].fileUrl} 
-                      alt="" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '200px',
-                        objectFit: 'cover',
-                        borderRadius: '8px', 
-                        marginBottom: '12px' 
-                      }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#9ca3af' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Heart size={16} fill={post.liked ? '#0D986A' : 'none'} color={post.liked ? '#0D986A' : '#9ca3af'} />
-                      {post.likesCount || 0}
-                    </span>
-                    <span>💬 {post.commentCount || 0}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '12px' }}>
-                      {new Date(post.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
+                />
               ))
             )}
           </div>
         );
       case "comments":
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
             {myComments.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 작성한 댓글이 없습니다.
               </div>
             ) : (
               myComments.map((comment) => (
-                <div
-                  key={comment.id}
+                <CommentCard 
+                  key={comment.id} 
+                  comment={comment}
                   onClick={() => navigate(`/main/community/post/${comment.postId}`)}
-                  style={{
-                    backgroundColor: 'white',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                    border: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}>
-                    {comment.content}
-                  </p>
-                  <p style={{ fontSize: '12px', color: '#9ca3af' }}>
-                    ↪ {comment.postTitle || "게시물"}
-                  </p>
-                  <p style={{ fontSize: '11px', color: '#d1d5db', marginTop: '4px' }}>
-                    {new Date(comment.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                  </p>
-                </div>
+                />
               ))
             )}
           </div>
         );
       case "liked":
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
             {likedPosts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 좋아요한 글이 없습니다.
               </div>
             ) : (
               likedPosts.map((post) => (
-                <div
-                  key={post.id}
+                <PostCard 
+                  key={post.id} 
+                  post={post}
                   onClick={() => navigate(`/main/community/post/${post.id}`)}
-                  style={{
-                    backgroundColor: 'white',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    border: '1px solid #f3f4f6'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>
-                    {post.author || post.username} 님의 글
-                  </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-                    {post.title || "제목 없음"}
-                  </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#6b7280', 
-                    marginBottom: '12px', 
-                    lineHeight: '1.5',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {post.content || "내용 없음"}
-                  </p>
-                  {post.files && post.files.length > 0 && (
-                    <img 
-                      src={post.files[0].fileUrl} 
-                      alt="" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '200px',
-                        objectFit: 'cover',
-                        borderRadius: '8px', 
-                        marginBottom: '12px' 
-                      }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#9ca3af' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Heart size={16} fill="#0D986A" color="#0D986A" />
-                      {post.likesCount || 0}
-                    </span>
-                    <span>💬 {post.commentCount || 0}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '12px' }}>
-                      {new Date(post.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
+                />
               ))
             )}
           </div>
@@ -445,7 +472,10 @@ function CommunityMyPage() {
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s',
-      borderBottom: '2px solid transparent'
+      backgroundColor: 'white',   // 1. 배경을 흰색으로
+      border: 'none',             // 2. 버튼의 기본 테두리(위, 아래, 양옆)를 모두 제거
+      outline: 'none',            // 3. 클릭 시 생기는 검은색 테두리(outline) 제거
+      borderBottom: '2px solid transparent' 
     },
     contentSection: {
       padding: '16px',
@@ -519,10 +549,9 @@ function CommunityMyPage() {
           👤
         </div>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', marginBottom: '4px' }}>
-            {userInfo.nickname || '내 활동 기록'}
+          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: '0px', paddingBottom:'14px'}}>
+            {userInfo.username || 'myusername'}
           </h2>
-          <p style={{ fontSize: '14px', color: '#6b7280' }}>@{userInfo.username}</p>
         </div>
       </div>
 
@@ -617,4 +646,4 @@ function CommunityMyPage() {
   );
 }
 
-export default CommunityMyPage; 
+export default CommunityMyPage;
