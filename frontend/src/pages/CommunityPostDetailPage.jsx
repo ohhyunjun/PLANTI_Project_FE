@@ -520,6 +520,7 @@ function CommunityPostDetailPage() {
             fontSize: '18px',
             fontWeight: '600',
             color: '#111827',
+            marginTop: '0',
             marginBottom: '16px',
             textAlign: 'left'
         },
@@ -536,6 +537,7 @@ function CommunityPostDetailPage() {
             fontSize: '14px',
             fontWeight: '600',
             color: '#1f2937',
+            marginTop: '0',
             marginBottom: '8px',
             textAlign: 'left'
         },
@@ -545,13 +547,15 @@ function CommunityPostDetailPage() {
             lineHeight: '1.6',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
+            marginTop: '0',
             marginBottom: '8px',
             textAlign: 'left'
         },
         commentDate: {
             fontSize: '12px',
             color: '#9ca3af',
-            textAlign: 'left'
+            textAlign: 'left',
+            margin: '0'
         },
         commentDivider: {
             height: '1px',
