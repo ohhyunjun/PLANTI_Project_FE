@@ -43,10 +43,13 @@ function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
+      maxWidth: '412px',
+      margin: '0 auto',
       backgroundColor: '#f8f9fa',
       display: 'flex',
       flexDirection: 'column',
-      padding: '16px'
+      padding: '16px',
+      boxSizing: 'border-box'
     }}>
       {/* 헤더 */}
       <div style={{
