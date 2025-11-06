@@ -187,22 +187,49 @@ function DiaryPage() {
 
   const styles = {
     container: {
-      padding: '24px',
-      maxWidth: '1280px',
+      maxWidth: '412px',
       margin: '0 auto',
-      backgroundColor: 'white',
+      backgroundColor: '#f9fafb',
       minHeight: '100vh',
-      paddingBottom: '100px'
+      display: 'flex',
+      flexDirection: 'column',
+      paddingBottom: '80px'
     },
     header: {
+      backgroundColor: 'white',
+      padding: '16px',
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      height: '42px'
+    },
+    logo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#374151'
+    },
+    contentWrapper: {
+      padding: '16px',
+      flex: 1
+    },
+    monthHeader: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '24px'
+      marginBottom: '16px'
     },
-    title: {
-      fontSize: '24px',
-      fontWeight: 'bold'
+    monthTitle: {
+      fontSize: '18px',
+      fontWeight: '700',
+      color: '#111827'
     },
     navButton: {
       padding: '8px',
@@ -210,13 +237,15 @@ function DiaryPage() {
       border: 'none',
       backgroundColor: 'transparent',
       borderRadius: '8px',
-      transition: 'background-color 0.2s'
+      transition: 'background-color 0.2s',
+      display: 'flex',
+      alignItems: 'center'
     },
     table: {
       width: '100%',
       borderCollapse: 'collapse',
       backgroundColor: 'white',
-      borderRadius: '8px',
+      borderRadius: '12px',
       overflow: 'hidden',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     },
@@ -253,8 +282,8 @@ function DiaryPage() {
     },
     fab: {
       position: 'fixed',
-      bottom: '90px',
-      right: '24px',
+      bottom: '100px',
+      right: 'calc(50% - 206px + 16px)',
       width: '56px',
       height: '56px',
       backgroundColor: '#10b981',
@@ -266,7 +295,8 @@ function DiaryPage() {
       boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
       border: 'none',
       cursor: 'pointer',
-      transition: 'background-color 0.2s'
+      transition: 'all 0.2s',
+      zIndex: 50
     },
     modalOverlay: {
       position: 'fixed',
@@ -285,202 +315,271 @@ function DiaryPage() {
       borderRadius: '16px',
       padding: '24px',
       width: '90%',
-      maxWidth: '500px',
+      maxWidth: '380px',
       maxHeight: '90vh',
       overflowY: 'auto'
+    },
+    navbar: {
+      position: 'fixed',
+      bottom: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
+      backgroundColor: 'white',
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
+    },
+    navContainer: {
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
+    },
+    navButton2: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '8px 16px',
+      transition: 'color 0.2s'
     }
   };
 
   return (
     <div style={styles.container}>
+      {/* 상단바 */}
       <div style={styles.header}>
-        <button style={styles.navButton} onClick={() => handleMonthChange(-1)} onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}>
-          <ChevronLeft size={24} />
-        </button>
-        <h2 style={styles.title}>{currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월</h2>
-        <button style={styles.navButton} onClick={() => handleMonthChange(1)} onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}>
-          <ChevronRight size={24} />
-        </button>
+        <div style={styles.logo}>
+          <button 
+            onClick={() => navigate('/main')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <span>다이어리</span>
+        </div>
       </div>
 
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            {weekDays.map((day, i) => (
-              <th key={i} style={styles.th}>{day}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {calendarWeeks.map((week, weekIndex) => (
-            <tr key={weekIndex}>
-              {week.map((day, dayIndex) => {
-                if (!day) return <td key={dayIndex} style={styles.td}></td>;
+      {/* 메인 컨텐츠 */}
+      <div style={styles.contentWrapper}>
+        {/* 월 네비게이션 */}
+        <div style={styles.monthHeader}>
+          <button 
+            style={styles.navButton} 
+            onClick={() => handleMonthChange(-1)} 
+            onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} 
+            onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <h2 style={styles.monthTitle}>
+            {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+          </h2>
+          <button 
+            style={styles.navButton} 
+            onClick={() => handleMonthChange(1)} 
+            onMouseEnter={e => e.target.style.backgroundColor = '#f3f4f6'} 
+            onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
 
-                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                const dateKey = formatDate(date);
-                const dayEvents = events[dateKey] || [];
-                const isToday = new Date().toDateString() === date.toDateString();
-
-                return (
-                  <td
-                    key={dayIndex}
-                    style={styles.td}
-                    onClick={() => setSelectedDate(date)}
-                    onMouseEnter={e => e.target.style.backgroundColor = '#f9fafb'}
-                    onMouseLeave={e => e.target.style.backgroundColor = 'white'}
-                  >
-                    <span style={{
-                      ...styles.dayNumber,
-                      backgroundColor: isToday ? '#10b981' : 'transparent',
-                      color: isToday ? 'white' : 'inherit'
-                    }}>
-                      {day}
-                    </span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '4px', gap: '2px' }}>
-                      {dayEvents.map((event, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            ...styles.eventDot,
-                            backgroundColor: getPlantColor(event.plant)
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </td>
-                );
-              })}
+        {/* 달력 테이블 */}
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              {weekDays.map((day, i) => (
+                <th key={i} style={styles.th}>{day}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {calendarWeeks.map((week, weekIndex) => (
+              <tr key={weekIndex}>
+                {week.map((day, dayIndex) => {
+                  if (!day) return <td key={dayIndex} style={styles.td}></td>;
 
-      {selectedDate && (
-        <div style={{ marginTop: '24px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
-            {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
-          </h3>
-          {(() => {
-            const dateKey = formatDate(selectedDate);
-            const dayEvents = events[dateKey] || [];
-            const hasEvents = dayEvents.length > 0;
+                  const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                  const dateKey = formatDate(date);
+                  const dayEvents = events[dateKey] || [];
+                  const isToday = new Date().toDateString() === date.toDateString();
 
-            return hasEvents ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {dayEvents.map((event, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    style={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      position: 'relative'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          backgroundColor: getPlantColor(event.plant)
-                        }}></span>
-                        <h4 style={{ fontSize: '16px', fontWeight: '600' }}>{event.name}</h4>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleEdit(idx)}
-                          style={{
-                            padding: '6px',
-                            backgroundColor: '#f3f4f6',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          onMouseEnter={e => e.target.style.backgroundColor = '#e5e7eb'}
-                          onMouseLeave={e => e.target.style.backgroundColor = '#f3f4f6'}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(dateKey, idx)}
-                          style={{
-                            padding: '6px',
-                            backgroundColor: '#fee2e2',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
-                          onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
-                        >
-                          <Trash2 size={16} color="#ef4444" />
-                        </button>
-                      </div>
-                    </div>
-                    {event.plant && (
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-                        식물: {event.plant}
-                      </p>
-                    )}
-                    <p style={{ color: '#374151', fontSize: '14px', marginBottom: '12px' }}>{event.content}</p>
-                    {event.media && event.media.length > 0 && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                        {event.media.map((media, i) => (
-                          <div key={i} style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px', overflow: 'hidden' }}>
-                            {media.type === 'image' ? (
-                              <img src={media.url} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <video src={media.url} controls style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                            )}
-                          </div>
+                  return (
+                    <td
+                      key={dayIndex}
+                      style={styles.td}
+                      onClick={() => setSelectedDate(date)}
+                      onMouseEnter={e => e.target.style.backgroundColor = '#f9fafb'}
+                      onMouseLeave={e => e.target.style.backgroundColor = 'white'}
+                    >
+                      <span style={{
+                        ...styles.dayNumber,
+                        backgroundColor: isToday ? '#10b981' : 'transparent',
+                        color: isToday ? 'white' : 'inherit'
+                      }}>
+                        {day}
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '4px', gap: '2px' }}>
+                        {dayEvents.map((event, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              ...styles.eventDot,
+                              backgroundColor: getPlantColor(event.plant)
+                            }}
+                          />
                         ))}
                       </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: '#f9fafb', borderRadius: '12px' }}>
-                <FileText size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
-                <p style={{ color: '#6b7280', marginBottom: '16px' }}>이 날에는 기록이 없습니다</p>
-                <button
-                  onClick={openAddModal}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px'
-                  }}
-                  onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-                  onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
-                >
-                  <Plus size={20} />
-                  <span>메모 추가</span>
-                </button>
-              </div>
-            );
-          })()}
-        </div>
-      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
+        {/* 선택된 날짜의 이벤트 */}
+        {selectedDate && (
+          <div style={{ marginTop: '24px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+              {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
+            </h3>
+            {(() => {
+              const dateKey = formatDate(selectedDate);
+              const dayEvents = events[dateKey] || [];
+              const hasEvents = dayEvents.length > 0;
+
+              return hasEvents ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {dayEvents.map((event, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      style={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '50%',
+                            backgroundColor: getPlantColor(event.plant)
+                          }}></span>
+                          <h4 style={{ fontSize: '16px', fontWeight: '600' }}>{event.name}</h4>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleEdit(idx)}
+                            style={{
+                              padding: '6px',
+                              backgroundColor: '#f3f4f6',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={e => e.target.style.backgroundColor = '#e5e7eb'}
+                            onMouseLeave={e => e.target.style.backgroundColor = '#f3f4f6'}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(dateKey, idx)}
+                            style={{
+                              padding: '6px',
+                              backgroundColor: '#fee2e2',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={e => e.target.style.backgroundColor = '#fecaca'}
+                            onMouseLeave={e => e.target.style.backgroundColor = '#fee2e2'}
+                          >
+                            <Trash2 size={16} color="#ef4444" />
+                          </button>
+                        </div>
+                      </div>
+                      {event.plant && (
+                        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                          식물: {event.plant}
+                        </p>
+                      )}
+                      <p style={{ color: '#374151', fontSize: '14px', marginBottom: '12px' }}>{event.content}</p>
+                      {event.media && event.media.length > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                          {event.media.map((media, i) => (
+                            <div key={i} style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#f3f4f6', borderRadius: '8px', overflow: 'hidden' }}>
+                              {media.type === 'image' ? (
+                                <img src={media.url} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <video src={media.url} controls style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+                  <FileText size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
+                  <p style={{ color: '#6b7280', marginBottom: '16px' }}>이 날에는 기록이 없습니다</p>
+                  <button
+                    onClick={openAddModal}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px'
+                    }}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
+                    onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+                  >
+                    <Plus size={20} />
+                    <span>메모 추가</span>
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* FAB 버튼 */}
       {selectedDate && (() => {
         const dateKey = formatDate(selectedDate);
         const dayEvents = events[dateKey] || [];
@@ -489,14 +588,21 @@ function DiaryPage() {
           <button
             onClick={openAddModal}
             style={styles.fab}
-            onMouseEnter={e => e.target.style.backgroundColor = '#059669'}
-            onMouseLeave={e => e.target.style.backgroundColor = '#10b981'}
+            onMouseEnter={e => {
+              e.target.style.backgroundColor = '#059669';
+              e.target.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={e => {
+              e.target.style.backgroundColor = '#10b981';
+              e.target.style.transform = 'scale(1)';
+            }}
           >
             <Plus size={28} />
           </button>
         ) : null;
       })()}
 
+      {/* 모달 */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={closeModal}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -510,7 +616,7 @@ function DiaryPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="오늘의 제목을 입력하세요"
-                style={{ width: '100%', border: '1px solid #d1d5db', padding: '12px', borderRadius: '8px', fontSize: '14px' }}
+                style={{ width: '100%', border: '1px solid #d1d5db', padding: '12px', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
               />
             </div>
             
@@ -520,7 +626,7 @@ function DiaryPage() {
                 value={formData.content}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
                 placeholder="오늘 있었던 일을 기록해보세요"
-                style={{ width: '100%', border: '1px solid #d1d5db', padding: '12px', borderRadius: '8px', height: '128px', resize: 'none', fontSize: '14px' }}
+                style={{ width: '100%', border: '1px solid #d1d5db', padding: '12px', borderRadius: '8px', height: '128px', resize: 'none', fontSize: '14px', boxSizing: 'border-box' }}
               />
             </div>
 
@@ -614,93 +720,38 @@ function DiaryPage() {
       )}
 
       {/* 하단 네비게이션 바 */}
-      <div style={{ 
-        position: 'fixed', 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        backgroundColor: 'white', 
-        borderTop: '1px solid #e5e7eb',
-        boxShadow: '0 -1px 3px 0 rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-around', 
-          padding: '0.75rem 1rem',
-          maxWidth: '28rem',
-          margin: '0 auto'
-        }}>
+      <div style={styles.navbar}>
+        <div style={styles.navContainer}>
           <button
             onClick={() => navigate('/main')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton2, color: '#6b7280' }}
           >
             <Home size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>홈</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>홈</span>
           </button>
           
           <button
             onClick={() => navigate('/main/community')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton2, color: '#6b7280' }}
           >
             <Users size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>커뮤니티</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>커뮤니티</span>
           </button>
           
-          <button
+          <button 
             onClick={() => navigate('/community/mypage')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton2, color: '#6b7280' }}
           >
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>My Page</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
           </button>
           
           <button
             onClick={() => navigate('/main/setting')}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '0.25rem',
-              color: '#6b7280',
-              minWidth: '60px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer'
-            }}
+            style={{ ...styles.navButton2, color: '#6b7280' }}
           >
             <Bell size={24} strokeWidth={2} />
-            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>알림</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
           </button>
         </div>
       </div>
