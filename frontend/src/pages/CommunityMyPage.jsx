@@ -527,7 +527,7 @@ function CommunityMyPage() {
       <div style={styles.header}>
         <div style={styles.logo}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/main')}
             style={{
               background: 'none',
               border: 'none',

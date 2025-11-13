@@ -463,10 +463,23 @@ export default function CommunityStartPage() {
       padding: '16px',
       paddingTop: '16px'
     },
-    floatingButton: {
+    floatingButtonContainer: {
       position: 'fixed',
-      bottom: '100px',
-      right: 'calc(50% - 206px + 16px)',
+      bottom: '100px', // 버튼의 기존 bottom 값
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      zIndex: 50,
+      pointerEvents: 'none',
+    },
+
+    floatingButton: {
+      
+      position: 'absolute', // 새 컨테이너 기준
+      bottom: 0, // 새 컨테이너의 바닥에 붙임
+      right: '16px', // 새 컨테이너의 오른쪽에 붙임
+      pointerEvents: 'auto', // 버튼은 클릭 이벤트를 받아야 함
       width: '56px',
       height: '56px',
       borderRadius: '50%',
@@ -477,7 +490,6 @@ export default function CommunityStartPage() {
       alignItems: 'center',
       justifyContent: 'center',
       boxShadow: '0 4px 12px rgba(13, 152, 106, 0.3)',
-      zIndex: 50,
       transition: 'all 0.2s'
     },
     navbar: {
@@ -520,7 +532,7 @@ export default function CommunityStartPage() {
       <div style={styles.header}>
         <div style={styles.logo}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/main')}
             style={{
               background: 'none',
               border: 'none',
@@ -614,31 +626,33 @@ export default function CommunityStartPage() {
       </div>
 
       {/* 글작성 FAB */}
-      <button
-        onClick={() => navigate('/community/create')}
-        style={styles.floatingButton}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.backgroundColor = '#0a7a56';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.backgroundColor = '#0D986A';
-        }}
-      >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="white" 
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div style={styles.floatingButtonContainer}>
+        <button
+          onClick={() => navigate('/community/create')}
+          style={styles.floatingButton}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.backgroundColor = '#0a7a56';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = '#0D986A';
+          }}
         >
-          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-        </svg>
-      </button>
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="white" 
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          </svg>
+        </button>
+      </div>
 
       {/* 하단 네비게이션 바 */}
       <div style={styles.navbar}>
