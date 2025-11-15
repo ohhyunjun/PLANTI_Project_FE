@@ -2,15 +2,39 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Home, Search, Users, Heart, Bell, ChevronLeft } from "lucide-react";
-import Layout from "../components/Layout";
 import { createPlant } from "../api/plant";
+
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
 
 // 식물 카테고리 데이터
 const plantCategories = [
   { id: "flower", name: "꽃식물", icon: "🌺", color: "#ffffff" },
   { id: "fruit", name: "열매식물", icon: "🍋", color: "#ffffff" },
   { id: "succulent", name: "다육 선인장 식물", icon: "🌵", color: "#ffffff" },
-  { id: "foliage", name: "일식물", icon: "🌿", color: "#ffffff" }
+  { id: "foliage", name: "잎식물", icon: "🌿", color: "#ffffff" }
 ];
 
 // 카테고리별 식물 데이터
@@ -120,81 +144,92 @@ function NogrowPage1() {
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f9fafb',
       maxWidth: '412px',
       margin: '0 auto',
-      paddingBottom: '80px',
+      backgroundColor: '#f9fafb',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      paddingBottom: '80px',
+      boxSizing: 'border-box'
     },
     header: {
-      backgroundColor: '#10b981',
+      backgroundColor: 'white',
       padding: '16px',
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       display: 'flex',
-      justifyContent: 'space-between',
       alignItems: 'center',
-      borderRadius: '0 0 20px 20px',
-      marginBottom: '0'
+      justifyContent: 'space-between',
+      position: 'left',
+      top: 0,
+      zIndex: 100
     },
     backButton: {
-      color: 'white',
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      padding: '4px',
+      padding: '8px',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#374151'
     },
     logo: {
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
-      color: 'white',
-      fontSize: '20px',
-      fontWeight: 'bold'
+      fontSize: '18px',
+      fontWeight: 'bold',
+      color: '#0D986A'
     },
     content: {
       padding: '16px',
       flex: 1,
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflowY: 'auto'
     },
     title: {
-      color: '#4b5563',
-      fontSize: '15px',
+      color: '#374151',
+      fontSize: '16px',
+      fontWeight: '600',
       marginBottom: '16px',
-      marginTop: '4px',
+      marginTop: '8px',
       textAlign: 'center'
     },
     searchContainer: {
       position: 'relative',
-      marginBottom: '16px',
+      marginBottom: '20px',
       width: '100%'
     },
     searchInput: {
       width: '100%',
       padding: '12px 16px',
       paddingRight: '48px',
-      border: '1px solid #d1d5db',
+      border: '1px solid #e5e7eb',
       borderRadius: '12px',
       fontSize: '15px',
       outline: 'none',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      backgroundColor: 'white',
+      transition: 'border-color 0.2s'
     },
     searchIcon: {
       position: 'absolute',
       right: '16px',
-      top: '12px',
+      top: '50%',
+      transform: 'translateY(-50%)',
       color: '#9ca3af'
     },
     categoryGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '8px',
+      gap: '12px',
       width: '100%'
     },
     categoryCard: {
-      padding: '40px 24px',
+      padding: '32px 20px',
       borderRadius: '16px',
       border: 'none',
       display: 'flex',
@@ -202,26 +237,27 @@ function NogrowPage1() {
       alignItems: 'center',
       gap: '12px',
       cursor: 'pointer',
-      transition: 'transform 0.2s',
+      transition: 'all 0.2s',
       height: '180px',
       justifyContent: 'center',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      width: '100%'
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)',
+      width: '100%',
+      backgroundColor: 'white'
     },
     categoryIcon: {
-      fontSize: '72px'
+      fontSize: '64px'
     },
     categoryName: {
       fontSize: '15px',
       fontWeight: '600',
-      color: '#1f2937',
+      color: '#374151',
       textAlign: 'center',
       lineHeight: '1.3'
     },
     plantList: {
       display: 'flex',
       flexDirection: 'column',
-      gap: '12px',
+      gap: '10px',
       marginBottom: '16px',
       width: '100%'
     },
@@ -229,17 +265,18 @@ function NogrowPage1() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '12px',
+      padding: '14px 16px',
       borderRadius: '12px',
       border: '2px solid',
       transition: 'all 0.2s',
       backgroundColor: 'white',
       width: '100%',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      cursor: 'pointer'
     },
     plantCardSelected: {
-      borderColor: '#10b981',
-      backgroundColor: '#d1fae5'
+      borderColor: '#0D986A',
+      backgroundColor: '#f0fdf4'
     },
     plantCardDefault: {
       borderColor: '#e5e7eb',
@@ -252,111 +289,102 @@ function NogrowPage1() {
       flex: 1
     },
     plantIcon: {
-      width: '80px',
-      height: '80px',
-      backgroundColor: '#fef3c7',
-      borderRadius: '8px',
+      fontSize: '40px',
+      minWidth: '40px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '48px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      flexShrink: 0
+      justifyContent: 'center'
     },
     plantDetails: {
       display: 'flex',
       flexDirection: 'column',
-      gap: '4px',
-      flex: 1
+      gap: '4px'
     },
     plantKoreanName: {
+      fontSize: '16px',
       fontWeight: '600',
-      fontSize: '17px',
       color: '#1f2937'
     },
     plantEnglishName: {
       fontSize: '13px',
-      color: '#10b981'
+      color: '#6b7280'
     },
     selectButton: {
-      width: '56px',
-      height: '56px',
+      width: '32px',
+      height: '32px',
       borderRadius: '50%',
-      border: '2px solid',
+      border: 'none',
+      fontSize: '20px',
+      cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: '32px',
-      cursor: 'pointer',
       transition: 'all 0.2s',
-      fontWeight: '300',
-      flexShrink: 0,
-      marginLeft: '8px'
+      fontWeight: 'bold'
     },
     selectButtonSelected: {
-      backgroundColor: '#10b981',
-      borderColor: '#10b981',
-      color: 'white',
-      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+      backgroundColor: '#0D986A',
+      color: 'white'
     },
     selectButtonDefault: {
-      backgroundColor: 'white',
-      borderColor: '#d1d5db',
-      color: '#d1d5db'
+      backgroundColor: '#f3f4f6',
+      color: '#9ca3af'
     },
     confirmButton: {
       width: '100%',
       padding: '16px',
       borderRadius: '12px',
       border: 'none',
-      fontSize: '17px',
+      fontSize: '16px',
       fontWeight: '600',
       cursor: 'pointer',
-      transition: 'all 0.2s',
-      color: 'white',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      marginTop: 'auto',
-      boxSizing: 'border-box'
+      marginTop: '16px',
+      transition: 'all 0.2s'
     },
     confirmButtonActive: {
-      backgroundColor: '#10b981'
+      backgroundColor: '#0D986A',
+      color: 'white'
     },
     confirmButtonDisabled: {
-      backgroundColor: '#d1d5db',
+      backgroundColor: '#e5e7eb',
+      color: '#9ca3af',
       cursor: 'not-allowed'
     },
     emptyState: {
       textAlign: 'center',
-      padding: '48px 0',
+      padding: '40px 20px',
       color: '#9ca3af',
       fontSize: '15px'
     },
     navbar: {
       position: 'fixed',
       bottom: 0,
-      left: 0,
-      right: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      maxWidth: '412px',
+      width: '100%',
+      height: '80px',
       backgroundColor: 'white',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -1px 3px rgba(0,0,0,0.1)'
+      boxShadow: '0 -4px 6px rgba(0,0,0,0.1)',
+      zIndex: 100
     },
     navContainer: {
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'space-around',
-      padding: '12px 16px',
-      maxWidth: '412px',
-      margin: '0 auto'
+      alignItems: 'center',
+      height: '100%',
+      padding: '0'
     },
     navButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '4px',
-      minWidth: '60px',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer'
+      padding: '8px 16px',
+      transition: 'color 0.2s'
     }
   };
 
@@ -364,6 +392,7 @@ function NogrowPage1() {
   if (step === "category") {
     return (
       <>
+        <style>{fontStyles}</style>
         <div style={styles.container}>
           {/* 헤더 */}
           <div style={styles.header}>
@@ -371,7 +400,6 @@ function NogrowPage1() {
               <ChevronLeft size={24} />
             </button>
             <div style={styles.logo}>
-              <span>🌱</span>
               <span>PLANTI</span>
             </div>
             <div style={{ width: '24px' }}></div>
@@ -386,10 +414,12 @@ function NogrowPage1() {
             <div style={styles.searchContainer}>
               <input
                 type="text"
-                placeholder="식물의 이름을 검색하시오."
+                placeholder="식물의 이름을 검색하세요"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={styles.searchInput}
+                onFocus={(e) => e.target.style.borderColor = '#0D986A'}
+                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
               />
               <Search style={styles.searchIcon} size={20} />
             </div>
@@ -404,17 +434,16 @@ function NogrowPage1() {
                     setStep("plants");
                     setSearchQuery("");
                   }}
-                  style={{
-                    ...styles.categoryCard,
-                    backgroundColor: category.color
-                  }}
+                  style={styles.categoryCard}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.backgroundColor = '#d1fae5';
+                    e.currentTarget.style.backgroundColor = '#f0fdf4';
+                    e.currentTarget.style.borderColor = '#0D986A';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = 'transparent';
                   }}
                 >
                   <div style={styles.categoryIcon}>{category.icon}</div>
@@ -456,12 +485,12 @@ function NogrowPage1() {
               style={{ ...styles.navButton, color: '#6b7280' }}
             >
               <Heart size={24} strokeWidth={2} />
-              <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+              <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
             </button>
 
             <button
               onClick={() => navigate('/main/setting')}
-              style={{ ...styles.navButton, color: '#10b981' }}
+              style={{ ...styles.navButton, color: '#6b7280' }}
             >
               <Bell size={24} strokeWidth={2} />
               <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
@@ -475,6 +504,7 @@ function NogrowPage1() {
   // 식물 선택 화면
   return (
     <>
+      <style>{fontStyles}</style>
       <div style={styles.container}>
         {/* 헤더 */}
         <div style={styles.header}>
@@ -504,10 +534,12 @@ function NogrowPage1() {
           <div style={styles.searchContainer}>
             <input
               type="text"
-              placeholder="식물의 이름을 검색하시오."
+              placeholder="식물의 이름을 검색하세요"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={styles.searchInput}
+              onFocus={(e) => e.target.style.borderColor = '#0D986A'}
+              onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
             />
             <Search style={styles.searchIcon} size={20} />
           </div>
@@ -519,6 +551,7 @@ function NogrowPage1() {
               return (
                 <div
                   key={plant.id}
+                  onClick={() => setSelectedPlant(isSelected ? null : plant)}
                   style={{
                     ...styles.plantCard,
                     ...(isSelected ? styles.plantCardSelected : styles.plantCardDefault)
@@ -541,13 +574,16 @@ function NogrowPage1() {
                   </div>
                   {/* 선택 버튼 */}
                   <button
-                    onClick={() => setSelectedPlant(isSelected ? null : plant)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPlant(isSelected ? null : plant);
+                    }}
                     style={{
                       ...styles.selectButton,
                       ...(isSelected ? styles.selectButtonSelected : styles.selectButtonDefault)
                     }}
                   >
-                    +
+                    {isSelected ? '✓' : '+'}
                   </button>
                 </div>
               );
@@ -568,6 +604,12 @@ function NogrowPage1() {
             style={{
               ...styles.confirmButton,
               ...(selectedPlant ? styles.confirmButtonActive : styles.confirmButtonDisabled)
+            }}
+            onMouseEnter={(e) => {
+              if (selectedPlant) e.target.style.backgroundColor = '#0a7d55';
+            }}
+            onMouseLeave={(e) => {
+              if (selectedPlant) e.target.style.backgroundColor = '#0D986A';
             }}
           >
             확인
@@ -599,12 +641,12 @@ function NogrowPage1() {
             style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Heart size={24} strokeWidth={2} />
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>My Page</span>
+            <span style={{ fontSize: '12px', fontWeight: '500' }}>마이페이지</span>
           </button>
 
           <button
             onClick={() => navigate('/main/setting')}
-            style={{ ...styles.navButton, color: '#10b981' }}
+            style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Bell size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>

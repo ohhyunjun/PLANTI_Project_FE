@@ -57,10 +57,17 @@ function SettingPage() {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // 10초마다 자동으로 알림 업데이트
+    const intervalId = setInterval(() => {
+      fetchNotifications();
+    }, 10000);
+    
+    return () => clearInterval(intervalId);
   }, [fetchNotifications]);
 
   const getNotificationIcon = (type) => {
-    const iconProps = { size: 20, color: '#0D986A' }; // <<< 아이콘 색상 변경
+    const iconProps = { size: 20, color: '#0D986A' };
     switch(type) {
       case 'GROWTH_STAGE_CHANGED':
       case 'FRUIT_FIRST_APPEARED':
@@ -233,7 +240,7 @@ function SettingPage() {
             style={{
               padding: '8px 16px', fontSize: '14px',
               fontWeight: showUnreadOnly ? 'normal' : '600',
-              backgroundColor: showUnreadOnly ? 'white' : '#0D986A', // <<< 색상 변경
+              backgroundColor: showUnreadOnly ? 'white' : '#0D986A',
               color: showUnreadOnly ? '#6b7280' : 'white',
               border: '1px solid #e5e7eb', borderRadius: '8px',
               cursor: 'pointer', transition: 'all 0.2s'
@@ -246,7 +253,7 @@ function SettingPage() {
             style={{
               padding: '8px 16px', fontSize: '14px',
               fontWeight: showUnreadOnly ? '600' : 'normal',
-              backgroundColor: showUnreadOnly ? '#0D986A' : 'white', // <<< 색상 변경
+              backgroundColor: showUnreadOnly ? '#0D986A' : 'white',
               color: showUnreadOnly ? 'white' : '#6b7280',
               border: '1px solid #e5e7eb', borderRadius: '8px',
               cursor: 'pointer', transition: 'all 0.2s'
@@ -274,21 +281,21 @@ function SettingPage() {
                 gap: '12px',
                 padding: '16px',
                 cursor: 'pointer',
-                backgroundColor: notification.isRead ? 'white' : '#E7F5EF', // <<< 색상 변경
+                backgroundColor: notification.isRead ? 'white' : '#E7F5EF',
                 transition: 'background-color 0.2s',
                 borderRadius: '12px',
                 margin: '0 16px 12px',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#E7F5EF'} // <<< 색상 변경
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#E7F5EF'}
             >
               <div style={{ flexShrink: 0, marginTop: '4px' }}>
                 {!notification.isRead && (
                   <div style={{ 
                     width: '12px', 
                     height: '12px', 
-                    backgroundColor: '#0D986A', // <<< 색상 변경
+                    backgroundColor: '#0D986A',
                     borderRadius: '9999px' 
                   }}></div>
                 )}
@@ -301,17 +308,18 @@ function SettingPage() {
                 {getNotificationIcon(notification.noticeType)}
               </div>
 
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, textAlign: 'left' }}>
                 {notification.deviceNickname && (
                   <div style={{
-                    display: 'inline-block',
-                    backgroundColor: notification.isRead ? '#f3f4f6' : '#ccece0', // <<< 색상 변경
-                    color: notification.isRead ? '#6b7280' : '#0D986A', // <<< 색상 변경
+                    display: 'block',
+                    width: 'fit-content',
+                    margin: '0 auto 4px',
+                    backgroundColor: notification.isRead ? '#f3f4f6' : '#ccece0',
+                    color: notification.isRead ? '#6b7280' : '#0D986A',
                     fontSize: '12px',
                     fontWeight: '600',
                     padding: '2px 8px',
                     borderRadius: '12px',
-                    marginBottom: '4px'
                   }}>
                      {notification.deviceNickname}
                   </div>
@@ -320,11 +328,19 @@ function SettingPage() {
                   fontSize: '14px',
                   marginTop: '2px',
                   color: notification.isRead ? '#6b7280' : '#1f2937',
-                  fontWeight: notification.isRead ? 'normal' : '500'
+                  fontWeight: notification.isRead ? 'normal' : '500',
+                  textAlign: 'left',
+                  margin: '2px 0'
                 }}>
                   {notification.message}
                 </p>
-                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                <p style={{ 
+                  fontSize: '12px', 
+                  color: '#9ca3af', 
+                  marginTop: '4px',
+                  textAlign: 'left',
+                  margin: '4px 0 0 0'
+                }}>
                   {formatTime(notification.createdAt)}
                   {notification.priority === 1 && (
                     <span style={{ marginLeft: '8px', color: '#ef4444' }}>⚠ 긴급</span>
@@ -380,7 +396,7 @@ function SettingPage() {
           
           <button
             onClick={() => navigate('/main/setting')}
-            style={{ ...styles.navButton, color: '#0D986A' }} // <<< 색상 변경
+            style={{ ...styles.navButton, color: '#0D986A' }}
           >
             <Bell size={24} strokeWidth={2} />
             <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
