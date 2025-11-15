@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Home, Users, Heart, Pencil, Trash2, X } from "lucide-react";
 import { registerDevice } from "../api/device";
 import { updatePlant } from "../api/plant";
+import { getUnreadCount } from "../api/notification";
 import apiClient from "../api/apiClient";
 import seedPotImage from "../assets/seed_pot.png";
 import deleteBtnImage from "../assets/deleteBtn.png";
@@ -119,6 +120,7 @@ function MainPage() {
   const [devices, setDevices] = useState([]);
   const [inputCode, setInputCode] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // 광고 배너 설정 (이미지 경로와 링크 URL을 여기서 수정하세요)
   const adBanner = {
@@ -163,8 +165,25 @@ function MainPage() {
     }
   };
 
+  // 읽지 않은 알림 개수 조회
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await getUnreadCount();
+      setUnreadCount(response.data.unreadCount || 0);
+    } catch (error) {
+      console.error("알림 개수 조회 실패:", error);
+      setUnreadCount(0);
+    }
+  };
+
   useEffect(() => {
     fetchDevices();
+    fetchUnreadCount();
+    
+    // 30초마다 알림 개수 업데이트
+    const intervalId = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000);
     
     // 스타일 태그 추가
     const styleElement = document.createElement('style');
@@ -172,6 +191,7 @@ function MainPage() {
     document.head.appendChild(styleElement);
     
     return () => {
+      clearInterval(intervalId);
       document.head.removeChild(styleElement);
     };
   }, []);
@@ -248,15 +268,14 @@ function MainPage() {
     
     try {
       await apiClient.delete(`/api/devices/${serialNumber}`);
-      setDevices(devices.filter(d => d.serialNumber !== serialNumber));
-      alert("기기 연결이 해제되었습니다.\n시리얼 번호를 알고 있는 다른 사용자가 이 기기를 등록할 수 있습니다.");
+      alert("기기 연결이 해제되었습니다.");
+      fetchDevices();
     } catch (error) {
-      console.error("연결 해제 실패:", error);
-      alert("연결 해제에 실패했습니다.");
+      console.error("기기 삭제 실패:", error);
+      alert("기기 삭제에 실패했습니다.");
     }
   };
 
-  // 광고 배너 클릭 핸들러
   const handleAdBannerClick = () => {
     window.open(adBanner.linkUrl, '_blank');
   };
@@ -274,11 +293,11 @@ function MainPage() {
     header: {
       backgroundColor: 'white',
       padding: '16px',
-      borderBottomLeftRadius: '20px', // 하단 왼쪽 곡선
-      borderBottomRightRadius: '20px', // 하단 오른쪽 곡선
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // 그림자 효과
-      display: 'flex', // 내부 요소들을 가로로 배치
-      alignItems: 'center', // 세로 중앙 정렬
+      borderBottomLeftRadius: '20px',
+      borderBottomRightRadius: '20px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'center',
       position: 'sticky',
       top: 0,
       zIndex: 100,
@@ -287,10 +306,10 @@ function MainPage() {
     logo: {
       display: 'flex',
       alignItems: 'center',
-      gap: '8px', // 아이콘과 텍스트 사이 간격
+      gap: '8px',
       fontSize: '18px',
       fontWeight: 'bold',
-      color: '#374151' // 약간 진한 회색
+      color: '#374151'
     },
     topSection: {
       padding: '16px',
@@ -398,31 +417,28 @@ function MainPage() {
       position: 'relative'
     },
     deviceIcon: {
-      width: '94px',
-      height: '97px',
-      marginRight: '16px',
-      objectFit: 'contain',
-      borderRadius: '12px'
+      width: '60px',
+      height: '60px',
+      borderRadius: '8px',
+      marginRight: '12px',
+      marginLeft: '12px',
+      marginTop: '12px',
+      marginBottom: '12px'
     },
     editButton: {
-      background: 'none', 
-      border: 'none',  
-      cursor: 'pointer',
-      padding: '0', 
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    deleteButton: {
-      position: 'absolute', 
-      top: '16px',          
-      right: '16px',   
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      padding: '0',
-      width: '20px',
-      height: '20px'
+      padding: '4px'
+    },
+    deleteButton: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '8px',
+      marginRight: '8px',
+      width: '40px',
+      height: '40px'
     },
     navbar: {
       position: 'fixed',
@@ -452,7 +468,18 @@ function MainPage() {
       alignItems: 'center',
       gap: '4px',
       padding: '8px 16px',
-      transition: 'color 0.2s'
+      transition: 'color 0.2s',
+      position: 'relative'
+    },
+    notificationBadge: {
+      position: 'absolute',
+      top: '4px',
+      right: '10px',
+      width: '12px',
+      height: '12px',
+      backgroundColor: '#0D986A',
+      borderRadius: '50%',
+      border: '2px solid white'
     }
   };
 
@@ -465,6 +492,7 @@ function MainPage() {
           <span>PLANTI</span>
         </div>
       </div>
+      
       {/* 하단 네비게이션 바 */}
       <div style={styles.navbar}>
         <div style={styles.navContainer}>
@@ -496,12 +524,15 @@ function MainPage() {
             style={{ ...styles.navButton, color: '#6b7280' }}
           >
             <Bell size={24} strokeWidth={2} />
+            {unreadCount > 0 && (
+              <div style={styles.notificationBadge}></div>
+            )}
             <span style={{ fontSize: '12px', fontWeight: '500' }}>알림</span>
           </button>
         </div>
       </div>
+      
       <div style={styles.topSection}>
-
         {/* 광고 배너 */}
         <div 
           style={styles.adBannerSection}
@@ -632,7 +663,7 @@ function MainPage() {
                         </p>
                         <button 
                           onClick={(e) => {
-                            e.stopPropagation(); // 카드 전체가 눌리는 것을 방지
+                            e.stopPropagation();
                             editPlantName(device);
                           }} 
                           style={styles.editButton}
@@ -651,13 +682,11 @@ function MainPage() {
                       </div>
                     )}
                   </div>
-                </button> 
-                {/* ▲▲▲ 1. 큰 버튼을 여기서 닫아줍니다. */}
+                </button>
                 
-                {/* ▼▼▼ 2. 삭제 버튼을 바깥으로 이동시킵니다. */}
                 <button 
                   onClick={(e) => {
-                    e.stopPropagation(); // 카드 전체가 눌리는 것을 방지
+                    e.stopPropagation();
                     deleteDevice(device.serialNumber);
                   }} 
                   style={styles.deleteButton}
@@ -669,8 +698,6 @@ function MainPage() {
           </div>
         )}
       </div>
-
-      
     </div>
   );
 }

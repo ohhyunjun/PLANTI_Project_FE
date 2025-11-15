@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, Bell, Home, Users, Heart } from "lucide-react";
 import apiClient from "../api/apiClient";
@@ -38,7 +38,6 @@ const fontStyles = `
 }
 `;
 
-// 🎨 스타트페이지 스타일 PostCard (썸네일 작게)
 const PostCard = ({ post, onClick }) => {
   return (
     <div
@@ -64,9 +63,7 @@ const PostCard = ({ post, onClick }) => {
         e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      {/* 좌측: 텍스트 영역 */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* 제목 */}
         <h3 style={{
           fontSize: '16px',
           fontWeight: '700',
@@ -80,7 +77,6 @@ const PostCard = ({ post, onClick }) => {
           {post.title || "제목 없음"}
         </h3>
         
-        {/* 내용 미리보기 */}
         <p style={{
           fontSize: '14px',
           color: '#6b7280',
@@ -95,7 +91,6 @@ const PostCard = ({ post, onClick }) => {
           {post.content || "내용 없음"}
         </p>
         
-        {/* 하단 정보 바 */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -104,24 +99,14 @@ const PostCard = ({ post, onClick }) => {
           color: '#9ca3af'
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Heart 
-              size={16} 
-              fill={post.liked ? '#0D986A' : 'none'} 
-              color={post.liked ? '#0D986A' : '#9ca3af'} 
-            />
-            {post.likesCount || 0}
+            ❤️ {post.likesCount || 0}
           </span>
-          <span>💬 {post.commentCount || 0}</span>
-          <span style={{ marginLeft: 'auto' }}>
-            {new Date(post.createdAt).toLocaleDateString('ko-KR', { 
-              month: 'short', 
-              day: 'numeric' 
-            })}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            💬 {post.commentCount || 0}
           </span>
         </div>
       </div>
       
-      {/* 우측: 썸네일 이미지 (있는 경우에만) */}
       {post.files && post.files.length > 0 && (
         <div style={{
           width: '80px',
@@ -133,14 +118,14 @@ const PostCard = ({ post, onClick }) => {
         }}>
           <img 
             src={post.files[0].fileUrl}
-            alt=""
+            alt="썸네일" 
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover'
             }}
             onError={(e) => {
-              e.target.parentElement.style.display = 'none';
+              e.target.style.display = 'none';
             }}
           />
         </div>
@@ -149,7 +134,6 @@ const PostCard = ({ post, onClick }) => {
   );
 };
 
-// 🎨 댓글 카드 (게시글 제목 포함)
 const CommentCard = ({ comment, onClick }) => {
   return (
     <div
@@ -173,7 +157,6 @@ const CommentCard = ({ comment, onClick }) => {
         e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      {/* 게시글 제목 */}
       <div style={{ 
         fontSize: '13px', 
         color: '#0D986A', 
@@ -186,7 +169,6 @@ const CommentCard = ({ comment, onClick }) => {
         📌 {comment.postTitle}
       </div>
       
-      {/* 댓글 내용 */}
       <p style={{ 
         fontSize: '14px', 
         color: '#374151', 
@@ -200,7 +182,6 @@ const CommentCard = ({ comment, onClick }) => {
         {comment.content}
       </p>
       
-      {/* 날짜 */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -232,15 +213,68 @@ function CommunityMyPage() {
     nickname: ''
   });
 
+  // 페이지네이션 상태 (각 탭별로 관리)
+  const [postsPage, setPostsPage] = useState(0);
+  const [postsHasMore, setPostsHasMore] = useState(true);
+  
+  const [likedPage, setLikedPage] = useState(0);
+  const [likedHasMore, setLikedHasMore] = useState(true);
+  
+  // 댓글은 백엔드에 페이지네이션이 없으면 기존 방식 유지
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  // 무한 스크롤을 위한 observer ref
+  const observerRef = useRef();
+  const lastItemRef = useCallback(node => {
+    if (loading) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        if (activeTab === "posts" && postsHasMore) {
+          setPostsPage(prev => prev + 1);
+        } else if (activeTab === "liked" && likedHasMore) {
+          setLikedPage(prev => prev + 1);
+        }
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, activeTab, postsHasMore, likedHasMore]);
+
   useEffect(() => {
     fetchUserInfo();
   }, []);
 
+  // 탭 변경 시 초기화
   useEffect(() => {
-    fetchData();
+    if (activeTab === "posts") {
+      setMyPosts([]);
+      setPostsPage(0);
+      setPostsHasMore(true);
+    } else if (activeTab === "liked") {
+      setLikedPosts([]);
+      setLikedPage(0);
+      setLikedHasMore(true);
+    } else if (activeTab === "comments" && !commentsLoaded) {
+      fetchMyComments();
+    }
   }, [activeTab]);
 
-  // 사용자 정보 가져오기
+  // 게시물 페이지 변경 시 로드
+  useEffect(() => {
+    if (activeTab === "posts") {
+      fetchMyPosts();
+    }
+  }, [postsPage]);
+
+  // 좋아요한 게시물 페이지 변경 시 로드
+  useEffect(() => {
+    if (activeTab === "liked") {
+      fetchLikedPosts();
+    }
+  }, [likedPage]);
+
   const fetchUserInfo = async () => {
     try {
       const response = await apiClient.get('/api/auth/me');
@@ -256,33 +290,27 @@ function CommunityMyPage() {
     }
   };
 
-  const fetchData = async () => {
+  const fetchMyPosts = async () => {
+    if (loading || !postsHasMore) return;
+    
     setLoading(true);
     try {
-      switch (activeTab) {
-        case "posts":
-          await fetchMyPosts();
-          break;
-        case "comments":
-          await fetchMyComments();
-          break;
-        case "liked":
-          await fetchLikedPosts();
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error("데이터를 불러오는 데 실패했습니다.", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMyPosts = async () => {
-    try {
-      const response = await apiClient.get('/api/posts/my');
-      setMyPosts(response.data);
+      const response = await apiClient.get('/api/posts/my', {
+        params: {
+          page: postsPage,
+          size: 10,
+          sort: 'createdAt,desc'
+        }
+      });
+      
+      const { content, last } = response.data;
+      
+      setMyPosts(prev => {
+        if (postsPage === 0) return content;
+        return [...prev, ...content];
+      });
+      
+      setPostsHasMore(!last);
     } catch (error) {
       console.error("내 게시물을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
@@ -290,13 +318,19 @@ function CommunityMyPage() {
         navigate('/auth/login');
       }
       setMyPosts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchMyComments = async () => {
+    if (commentsLoaded) return;
+    
+    setLoading(true);
     try {
       const response = await apiClient.get('/api/comments/my');
       setMyComments(response.data);
+      setCommentsLoaded(true);
     } catch (error) {
       console.error("내 댓글을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
@@ -304,13 +338,32 @@ function CommunityMyPage() {
         navigate('/auth/login');
       }
       setMyComments([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchLikedPosts = async () => {
+    if (loading || !likedHasMore) return;
+    
+    setLoading(true);
     try {
-      const response = await apiClient.get('/api/posts/liked');
-      setLikedPosts(response.data);
+      const response = await apiClient.get('/api/posts/liked', {
+        params: {
+          page: likedPage,
+          size: 10,
+          sort: 'createdAt,desc'
+        }
+      });
+      
+      const { content, last } = response.data;
+      
+      setLikedPosts(prev => {
+        if (likedPage === 0) return content;
+        return [...prev, ...content];
+      });
+      
+      setLikedHasMore(!last);
     } catch (error) {
       console.error("좋아요한 게시물을 불러오는 데 실패했습니다.", error);
       if (error.response?.status === 401) {
@@ -318,54 +371,93 @@ function CommunityMyPage() {
         navigate('/auth/login');
       }
       setLikedPosts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const renderContent = () => {
-    if (loading) {
-      return (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '48px 0',
-          color: '#0D986A'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            border: '3px solid #d1fae5',
-            borderTop: '3px solid #0D986A',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-        </div>
-      );
-    }
-
     switch (activeTab) {
       case "posts":
         return (
           <div>
-            {myPosts.length === 0 ? (
+            {myPosts.length === 0 && !loading ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 작성한 글이 없습니다.
               </div>
             ) : (
-              myPosts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={post}
-                  onClick={() => navigate(`/main/community/post/${post.id}`)}
-                />
-              ))
+              <>
+                {myPosts.map((post, index) => {
+                  if (myPosts.length === index + 1) {
+                    return (
+                      <div ref={lastItemRef} key={post.id}>
+                        <PostCard 
+                          post={post}
+                          onClick={() => navigate(`/main/community/post/${post.id}`)}
+                        />
+                      </div>
+                    );
+                  }
+                  return (
+                    <PostCard 
+                      key={post.id} 
+                      post={post}
+                      onClick={() => navigate(`/main/community/post/${post.id}`)}
+                    />
+                  );
+                })}
+                
+                {loading && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '24px 0'
+                  }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      border: '3px solid #d1fae5',
+                      borderTop: '3px solid #0D986A',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  </div>
+                )}
+                
+                {!postsHasMore && myPosts.length > 0 && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '24px 0',
+                    color: '#9ca3af',
+                    fontSize: '14px'
+                  }}>
+                    모든 게시물을 불러왔습니다.
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
+        
       case "comments":
         return (
           <div>
-            {myComments.length === 0 ? (
+            {loading ? (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '48px 0'
+              }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '3px solid #d1fae5',
+                  borderTop: '3px solid #0D986A',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+              </div>
+            ) : myComments.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 작성한 댓글이 없습니다.
               </div>
@@ -380,24 +472,68 @@ function CommunityMyPage() {
             )}
           </div>
         );
+        
       case "liked":
         return (
           <div>
-            {likedPosts.length === 0 ? (
+            {likedPosts.length === 0 && !loading ? (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
                 좋아요한 글이 없습니다.
               </div>
             ) : (
-              likedPosts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={post}
-                  onClick={() => navigate(`/main/community/post/${post.id}`)}
-                />
-              ))
+              <>
+                {likedPosts.map((post, index) => {
+                  if (likedPosts.length === index + 1) {
+                    return (
+                      <div ref={lastItemRef} key={post.id}>
+                        <PostCard 
+                          post={post}
+                          onClick={() => navigate(`/main/community/post/${post.id}`)}
+                        />
+                      </div>
+                    );
+                  }
+                  return (
+                    <PostCard 
+                      key={post.id} 
+                      post={post}
+                      onClick={() => navigate(`/main/community/post/${post.id}`)}
+                    />
+                  );
+                })}
+                
+                {loading && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '24px 0'
+                  }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      border: '3px solid #d1fae5',
+                      borderTop: '3px solid #0D986A',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  </div>
+                )}
+                
+                {!likedHasMore && likedPosts.length > 0 && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '24px 0',
+                    color: '#9ca3af',
+                    fontSize: '14px'
+                  }}>
+                    모든 게시물을 불러왔습니다.
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
+        
       default:
         return null;
     }
@@ -472,10 +608,10 @@ function CommunityMyPage() {
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s',
-      backgroundColor: 'white',   // 1. 배경을 흰색으로
-      border: 'none',             // 2. 버튼의 기본 테두리(위, 아래, 양옆)를 모두 제거
-      outline: 'none',            // 3. 클릭 시 생기는 검은색 테두리(outline) 제거
-      borderBottom: '2px solid transparent' 
+      backgroundColor: 'white',
+      border: 'none',
+      outline: 'none',
+      borderBottom: '2px solid transparent'
     },
     contentSection: {
       padding: '16px',
@@ -527,7 +663,7 @@ function CommunityMyPage() {
       <div style={styles.header}>
         <div style={styles.logo}>
           <button 
-            onClick={() => navigate('/main')}
+            onClick={() => navigate('/main/community')}
             style={{
               background: 'none',
               border: 'none',
@@ -642,6 +778,14 @@ function CommunityMyPage() {
           </button>
         </div>
       </div>
+
+      {/* 스피너 애니메이션 */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

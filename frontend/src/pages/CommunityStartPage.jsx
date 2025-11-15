@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Users, Heart, Bell, ChevronDown, Search, ChevronLeft } from "lucide-react";
 import { getPosts, togglePostLike } from "../api/community";
@@ -174,7 +174,6 @@ const SortDropdown = ({ value, onChange, options }) => {
   );
 };
 
-// ✅ 방안 2: 작은 썸네일 버전 PostCard (조회수 제거)
 const PostCard = ({ post, nav, onLikeToggle }) => {
   const [isLiked, setIsLiked] = useState(post.liked || false);
   const [likeCount, setLikeCount] = useState(post.likesCount || 0);
@@ -271,7 +270,7 @@ const PostCard = ({ post, nav, onLikeToggle }) => {
           {post.content || "내용 없음"}
         </p>
         
-        {/* 하단 정보 바 - 조회수 제거 */}
+        {/* 하단 정보 바 */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -362,48 +361,85 @@ export default function CommunityStartPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState('최신순');
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalElements, setTotalElements] = useState(0);
+  
+  // 무한 스크롤을 위한 observer ref
+  const observerRef = useRef();
+  const lastPostRef = useCallback(node => {
+    if (loading) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setCurrentPage(prevPage => prevPage + 1);
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, hasMore]);
 
   const sortOptions = [
     { value: '최신순', label: '최신순' },
     { value: '인기순', label: '인기순' }
   ];
 
+  // 정렬 방식 변경 시 초기화 후 다시 로드
+  useEffect(() => {
+    setPosts([]);
+    setCurrentPage(0);
+    setHasMore(true);
+  }, [sortBy]);
+
+  // 게시물 로드
   useEffect(() => {
     const fetchPosts = async () => {
+      if (loading || !hasMore) return;
+      
       setLoading(true);
       try {
-        const response = await getPosts();
-        setPosts(response.data);
+        // 정렬 파라미터 설정
+        const sortParam = sortBy === '인기순' 
+          ? 'likesCount,desc' 
+          : 'createdAt,desc';
+        
+        const response = await getPosts({
+          page: currentPage,
+          size: 10,
+          sort: sortParam
+        });
+        
+        // Spring Page 응답 구조: { content: [], totalElements, totalPages, last, ... }
+        const { content, totalElements, last } = response.data;
+        
+        setPosts(prevPosts => {
+          // 첫 페이지면 새로 설정, 아니면 추가
+          if (currentPage === 0) {
+            return content;
+          }
+          return [...prevPosts, ...content];
+        });
+        
+        setTotalElements(totalElements);
+        setHasMore(!last); // last가 true면 더 이상 데이터 없음
+        
       } catch (error) {
         console.error('게시물 로딩 실패:', error);
-        alert('게시물을 불러오는데 실패했습니다.');
+        if (currentPage === 0) {
+          alert('게시물을 불러오는데 실패했습니다.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchPosts();
-  }, []);
-
-  // 정렬 변경 시 게시물 재정렬 (조회순 제거)
-  useEffect(() => {
-    const sortedPosts = [...posts];
-    
-    switch(sortBy) {
-      case '최신순':
-        sortedPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        break;
-      case '인기순':
-        sortedPosts.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-        break;
-      default:
-        break;
-    }
-    
-    setPosts(sortedPosts);
-  }, [sortBy]);
+  }, [currentPage, sortBy]);
 
   // 좋아요 토글 시 posts 배열 업데이트
   const handleLikeToggle = (postId, liked, likesCount) => {
@@ -465,7 +501,7 @@ export default function CommunityStartPage() {
     },
     floatingButtonContainer: {
       position: 'fixed',
-      bottom: '100px', // 버튼의 기존 bottom 값
+      bottom: '100px',
       left: '50%',
       transform: 'translateX(-50%)',
       maxWidth: '412px',
@@ -473,13 +509,11 @@ export default function CommunityStartPage() {
       zIndex: 50,
       pointerEvents: 'none',
     },
-
     floatingButton: {
-      
-      position: 'absolute', // 새 컨테이너 기준
-      bottom: 0, // 새 컨테이너의 바닥에 붙임
-      right: '16px', // 새 컨테이너의 오른쪽에 붙임
-      pointerEvents: 'auto', // 버튼은 클릭 이벤트를 받아야 함
+      position: 'absolute',
+      bottom: 0,
+      right: '16px',
+      pointerEvents: 'auto',
       width: '56px',
       height: '56px',
       borderRadius: '50%',
@@ -573,7 +607,7 @@ export default function CommunityStartPage() {
             전체
           </h2>
           <span style={{ fontSize: '14px', color: '#9ca3af' }}>
-            {posts.length}
+            {totalElements}
           </span>
         </div>
         
@@ -586,12 +620,47 @@ export default function CommunityStartPage() {
 
       {/* 메인 컨텐츠 */}
       <div style={styles.contentSection}>
+        {posts.length === 0 && !loading && (
+          <div style={{
+            textAlign: 'center',
+            padding: '48px 0',
+            color: '#9ca3af'
+          }}>
+            게시물이 없습니다.
+          </div>
+        )}
+        
+        {posts.map((post, index) => {
+          // 마지막 게시물에 ref 추가
+          if (posts.length === index + 1) {
+            return (
+              <div ref={lastPostRef} key={post.id}>
+                <PostCard 
+                  post={post} 
+                  nav={navigate}
+                  onLikeToggle={handleLikeToggle}
+                />
+              </div>
+            );
+          } else {
+            return (
+              <PostCard 
+                key={post.id} 
+                post={post} 
+                nav={navigate}
+                onLikeToggle={handleLikeToggle}
+              />
+            );
+          }
+        })}
+        
+        {/* 로딩 인디케이터 */}
         {loading && (
           <div style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '48px 0',
+            padding: '24px 0',
             color: '#0D986A'
           }}>
             <div style={{
@@ -605,24 +674,17 @@ export default function CommunityStartPage() {
           </div>
         )}
         
-        {!loading && posts.length === 0 && (
+        {/* 더 이상 데이터가 없을 때 */}
+        {!hasMore && posts.length > 0 && (
           <div style={{
             textAlign: 'center',
-            padding: '48px 0',
-            color: '#9ca3af'
+            padding: '24px 0',
+            color: '#9ca3af',
+            fontSize: '14px'
           }}>
-            게시물이 없습니다.
+            모든 게시물을 불러왔습니다.
           </div>
         )}
-        
-        {!loading && posts.map((post) => (
-          <PostCard 
-            key={post.id} 
-            post={post} 
-            nav={navigate}
-            onLikeToggle={handleLikeToggle}
-          />
-        ))}
       </div>
 
       {/* 글작성 FAB */}
