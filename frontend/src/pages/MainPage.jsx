@@ -8,6 +8,7 @@ import { getUnreadCount } from "../api/notification";
 import apiClient from "../api/apiClient";
 import seedPotImage from "../assets/seed_pot.png";
 import deleteBtnImage from "../assets/deleteBtn.png";
+import logoImage from "../assets/logo.png"; // 로고 이미지 import 추가
 
 // 식물 성장 단계별 이미지 import (tomato 폴더 내)
 import germinationTomato from "../assets/tomato/GERMINATION_tomato.png";
@@ -488,7 +489,11 @@ function MainPage() {
       <style>{fontStyles}</style>
       <div style={styles.header}>
         <div style={styles.logo}>
-          <span style={{ fontSize: '24px', color: '#4ade80' }}>🌱</span>
+          <img 
+            src={logoImage} 
+            alt="PLANTI Logo" 
+            style={{ width: '28px', height: '28px', objectFit: 'contain' }} 
+          />
           <span>PLANTI</span>
         </div>
       </div>
