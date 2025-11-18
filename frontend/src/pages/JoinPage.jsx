@@ -5,6 +5,35 @@ import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 // .env로 부터 백엔드 URL 받아오기
 const BACKEND_API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
+
+
 function JoinPage() {
   const navigate = useNavigate();
 
@@ -44,6 +73,7 @@ function JoinPage() {
     const delay = setTimeout(checkUsername, 300);
     return () => clearTimeout(delay);
   }, [username]);
+      <style>{fontStyles}</style>
 
   // 회원 가입 이벤트
   const handleSignUp = async (e) => {

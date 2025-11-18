@@ -3,6 +3,35 @@ import { useNavigate } from "react-router-dom";
 import logoImage from "../assets/logo.png"; // 로고 이미지 import 추가
 import plantsImage from "../assets/plants.png"; // 식물 이미지 import 추가
 
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
+
+
 function LoginChoicePage() {
   const navigate = useNavigate();
 
@@ -120,6 +149,7 @@ function LoginChoicePage() {
 
   return (
     <div className="login" style={styles.container}>
+      <style>{fontStyles}</style>
       {/* 상단 식물 이미지 섹션 */}
       <div className="login-top" style={styles.imageSection}>
         <img 

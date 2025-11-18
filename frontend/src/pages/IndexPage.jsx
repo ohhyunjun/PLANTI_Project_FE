@@ -1,6 +1,35 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
+
 function IndexPage() {
   const navigate = useNavigate();
 
@@ -130,6 +159,7 @@ function IndexPage() {
 
   return (
     <div className="landing" style={styles.container}>
+      <style>{fontStyles}</style>
       <div style={styles.content}>
         {/* 왼쪽 섹션 */}
         <div style={styles.leftSection}>

@@ -291,11 +291,13 @@ function NogrowPage1() {
     plantKoreanName: {
       fontSize: '16px',
       fontWeight: '600',
-      color: '#1f2937'
+      color: '#1f2937',
+      textAlign: 'left'
     },
     plantEnglishName: {
       fontSize: '13px',
-      color: '#6b7280'
+      color: '#6b7280',
+      textAlign: 'left'
     },
     selectButton: {
       width: '32px',

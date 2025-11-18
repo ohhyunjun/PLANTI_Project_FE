@@ -348,7 +348,7 @@ function MainPage() {
     featureButtonRow: {
       display: 'flex',
       gap: '12px',
-      paddingBottom: '8px'
+      paddingBottom: '0'
     },
     featureButton: {
       flex: 1,
