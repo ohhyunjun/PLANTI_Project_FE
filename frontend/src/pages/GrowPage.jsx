@@ -425,6 +425,19 @@ function GrowPage() {
       </div>
     );
   }
+
+  const getPlantIcon = (speciesName) => {
+    if (!speciesName) return '🌱'; // 기본 아이콘 (데이터 로딩 중 등)
+
+    if (speciesName.includes('상추')) {
+      return '🥬';
+    }
+    if (speciesName.includes('토마토')) {
+      return '🍅';
+    }
+
+    return '🌱'; // 등록된 아이콘이 없는 경우 기본값
+  };
   
   return (
     <div style={styles.container}>
@@ -459,7 +472,9 @@ function GrowPage() {
         </div>
 
         <div style={styles.plantInfo}>
-          <div style={styles.plantIcon}>🍅</div>
+          <div style={styles.plantIcon}>
+            {getPlantIcon(plant?.speciesName)}
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
               {plant.species || plant.name}
