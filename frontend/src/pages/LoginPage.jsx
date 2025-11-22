@@ -5,6 +5,35 @@ import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 // .env로 부터 백엔드 URL 받아오기
 const BACKEND_API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
+// Pretendard 폰트 추가
+const fontStyles = `
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+* {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+`;
+
+
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -41,16 +70,20 @@ function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      maxWidth: '412px',
-      margin: '0 auto',
-      backgroundColor: '#f8f9fa',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '16px',
-      boxSizing: 'border-box'
-    }}>
+  <>
+    <style>{fontStyles}</style>
+    <div
+      style={{
+        minHeight: '100vh',
+        maxWidth: '412px',
+        margin: '0 auto',
+        backgroundColor: '#f8f9fa',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '16px',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* 헤더 */}
       <div style={{
         display: 'flex',
@@ -276,6 +309,7 @@ function LoginPage() {
         </div>
       </div>
     </div>
+  </>
   );
 }
 

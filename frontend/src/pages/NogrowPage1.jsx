@@ -34,7 +34,7 @@ const plantCategories = [
   { id: "flower", name: "꽃식물", icon: "🌺", color: "#ffffff" },
   { id: "fruit", name: "열매식물", icon: "🍋", color: "#ffffff" },
   { id: "succulent", name: "다육 선인장 식물", icon: "🌵", color: "#ffffff" },
-  { id: "foliage", name: "잎식물", icon: "🌿", color: "#ffffff" }
+  { id: "foliage", name: "허브 & 잎채소", icon: "🌿", color: "#ffffff" }
 ];
 
 // 카테고리별 식물 데이터
@@ -43,32 +43,20 @@ const plantsByCategory = {
     { id: "rose", name: "Rose", koreanName: "장미", icon: "🌹" },
     { id: "geranium", name: "Geranium", koreanName: "제라늄", icon: "🌺" },
     { id: "tulip", name: "Tulip", koreanName: "튤립", icon: "🌷" },
-    { id: "sunflower", name: "Sunflower", koreanName: "해바라기", icon: "🌻" },
-    { id: "orchid", name: "Orchid", koreanName: "난초", icon: "🌸" },
-    { id: "lily", name: "Lily", koreanName: "백합", icon: "💮" }
+    { id: "sunflower", name: "Sunflower", koreanName: "해바라기", icon: "🌻" }
   ],
   fruit: [
     { id: "strawberry", name: "Strawberry", koreanName: "딸기", icon: "🍓" },
-    { id: "orange", name: "Orange", koreanName: "오렌지", icon: "🍊" },
-    { id: "lemon", name: "Lemon", koreanName: "레몬", icon: "🍋" },
     { id: 1, name: "Tomato", koreanName: "토마토", icon: "🍅" },
-    { id: "blueberry", name: "Blueberry", koreanName: "블루베리", icon: "🫐" },
-    { id: "apple", name: "Apple", koreanName: "사과", icon: "🍎" }
+    { id: "blueberry", name: "Blueberry", koreanName: "블루베리", icon: "🫐" }
   ],
   succulent: [
-    { id: "cactus", name: "Cactus", koreanName: "선인장", icon: "🌵" },
-    { id: "aloe", name: "Aloe", koreanName: "알로에", icon: "🪴" },
-    { id: "echeveria", name: "Echeveria", koreanName: "에케베리아", icon: "🌿" },
-    { id: "jade", name: "Jade Plant", koreanName: "염좌", icon: "🌱" },
-    { id: "succulent", name: "Succulent", koreanName: "다육이", icon: "🍀" }
+    { id: "cactus", name: "Cactus", koreanName: "선인장", icon: "🌵" }
   ],
   foliage: [
     { id: 2, name: "Lettuce", koreanName: "상추", icon: "🥬" },
-    { id: "monstera", name: "Monstera", koreanName: "몬스테라", icon: "🌿" },
-    { id: "pothos", name: "Pothos", koreanName: "스킨답서스", icon: "🍃" },
-    { id: "fern", name: "Fern", koreanName: "고사리", icon: "🌾" },
-    { id: "snake", name: "Snake Plant", koreanName: "산세베리아", icon: "🌱" },
-    { id: "philodendron", name: "Philodendron", koreanName: "필로덴드론", icon: "🪴" }
+    { id: "korean-chives", name: "Korean Chives", koreanName: "부추", icon: "🌿" },
+    { id: "bok-choy", name: "Bok Choy", koreanName: "청경채", icon: "🥬" }
   ]
 };
 
@@ -303,11 +291,13 @@ function NogrowPage1() {
     plantKoreanName: {
       fontSize: '16px',
       fontWeight: '600',
-      color: '#1f2937'
+      color: '#1f2937',
+      textAlign: 'left'
     },
     plantEnglishName: {
       fontSize: '13px',
-      color: '#6b7280'
+      color: '#6b7280',
+      textAlign: 'left'
     },
     selectButton: {
       width: '32px',

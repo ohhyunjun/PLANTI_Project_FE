@@ -8,6 +8,9 @@ import { getUnreadCount } from "../api/notification";
 import apiClient from "../api/apiClient";
 import seedPotImage from "../assets/seed_pot.png";
 import deleteBtnImage from "../assets/deleteBtn.png";
+import logoImage from "../assets/logo.png"; // 로고 이미지 import 추가
+
+import metaverseImage from "../assets/metaverse.png";
 
 // 식물 성장 단계별 이미지 import (tomato 폴더 내)
 import germinationTomato from "../assets/tomato/GERMINATION_tomato.png";
@@ -124,9 +127,9 @@ function MainPage() {
 
   // 광고 배너 설정 (이미지 경로와 링크 URL을 여기서 수정하세요)
   const adBanner = {
-    imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=400&fit=crop',
-    linkUrl: 'https://www.naver.com',
-    altText: '네이버 식물 광고'
+    imageUrl: metaverseImage,
+    linkUrl: 'https://www.youtube.com/@Hongik-Metaverse/featured',
+    altText: '메타버스 아카데미 광고'
   };
 
   // 식물 성장 단계에 따른 이미지 반환 함수
@@ -347,7 +350,7 @@ function MainPage() {
     featureButtonRow: {
       display: 'flex',
       gap: '12px',
-      paddingBottom: '8px'
+      paddingBottom: '0'
     },
     featureButton: {
       flex: 1,
@@ -488,7 +491,11 @@ function MainPage() {
       <style>{fontStyles}</style>
       <div style={styles.header}>
         <div style={styles.logo}>
-          <span style={{ fontSize: '24px', color: '#4ade80' }}>🌱</span>
+          <img 
+            src={logoImage} 
+            alt="PLANTI Logo" 
+            style={{ width: '28px', height: '28px', objectFit: 'contain' }} 
+          />
           <span>PLANTI</span>
         </div>
       </div>
