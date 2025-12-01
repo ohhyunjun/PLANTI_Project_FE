@@ -44,9 +44,11 @@ function DiaryPage() {
   const [formData, setFormData] = useState({
     name: '',
     content: '',
-    plant: ''
+    plant: '',
+    plantId: null
   });
   const [plants, setPlants] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 식물 목록 가져오기
   useEffect(() => {
@@ -67,10 +69,11 @@ function DiaryPage() {
           "rgb(156 163 175)"  // 회색
         ];
         
-        // 식물이 등록된 기기만 필터링하고 색상 배정
+        // 식물이 등록된 기기만 필터링하고 색상 배정 (id 추가)
         const plantList = devices
           .filter(device => device.plant)
           .map((device, index) => ({
+            id: device.plant.id,
             name: device.plant.name,
             species: device.plant.species,
             color: colors[index % colors.length],
@@ -85,6 +88,39 @@ function DiaryPage() {
     };
     
     fetchPlants();
+  }, []);
+
+  // 다이어리 목록 가져오기 (백엔드 API 추가)
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        const response = await apiClient.get('/api/diaries');
+        const diaries = response.data;
+        
+        // 날짜별로 그룹화
+        const groupedEvents = {};
+        diaries.forEach(diary => {
+          const dateKey = diary.targetDate;
+          if (!groupedEvents[dateKey]) {
+            groupedEvents[dateKey] = [];
+          }
+          groupedEvents[dateKey].push({
+            id: diary.id,
+            name: diary.title,
+            content: diary.content,
+            plant: diary.plantName,
+            media: [],
+            timestamp: diary.createdAt
+          });
+        });
+        
+        setEvents(groupedEvents);
+      } catch (error) {
+        console.error("다이어리 목록을 불러오는 데 실패했습니다.", error);
+      }
+    };
+    
+    fetchDiaries();
   }, []);
 
   const handleMonthChange = (dir) => {
@@ -106,7 +142,12 @@ function DiaryPage() {
     return days;
   };
 
-  const formatDate = (date) => date.toISOString().split("T")[0];
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -132,53 +173,120 @@ function DiaryPage() {
     setUploadedFiles(newFiles);
   };
 
-  const handleSave = () => {
+  // 백엔드 API 연동 추가
+  const handleSave = async () => {
     if (!formData.name || !formData.content) {
       alert('제목과 내용을 입력해주세요.');
       return;
     }
 
-    const newEvent = {
-      name: formData.name,
-      content: formData.content,
-      plant: formData.plant,
-      media: previewUrls,
-      timestamp: new Date().toISOString()
-    };
-
-    const dateKey = selectedDate.toISOString().split("T")[0];
-    if (editingEvent !== null) {
-      const updated = [...events[dateKey]];
-      updated[editingEvent] = newEvent;
-      setEvents({ ...events, [dateKey]: updated });
-      setEditingEvent(null);
-    } else {
-      setEvents({
-        ...events,
-        [dateKey]: [...(events[dateKey] || []), newEvent],
-      });
+    if (!formData.plantId) {
+      alert('식물을 선택해주세요.');
+      return;
     }
-    
-    setShowModal(false);
-    setUploadedFiles([]);
-    setPreviewUrls([]);
-    setFormData({ name: '', content: '', plant: '' });
+
+    setIsLoading(true);
+
+    try {
+      const requestData = {
+        title: formData.name,
+        content: formData.content,
+        targetDate: formatDate(selectedDate)
+      };
+
+      const dateKey = formatDate(selectedDate);
+      
+      if (editingEvent !== null) {
+        // 수정
+        const diary = events[dateKey][editingEvent];
+        await apiClient.put(`/api/plants/${formData.plantId}/diaries/${diary.id}`, requestData);
+        
+        const newEvent = {
+          id: diary.id,
+          name: formData.name,
+          content: formData.content,
+          plant: formData.plant,
+          media: previewUrls,
+          timestamp: new Date().toISOString()
+        };
+        
+        const updated = [...events[dateKey]];
+        updated[editingEvent] = newEvent;
+        setEvents({ ...events, [dateKey]: updated });
+        setEditingEvent(null);
+      } else {
+        // 생성
+        const response = await apiClient.post(`/api/plants/${formData.plantId}/diaries`, requestData);
+        const newDiary = response.data;
+        
+        const newEvent = {
+          id: newDiary.id,
+          name: formData.name,
+          content: formData.content,
+          plant: formData.plant,
+          media: previewUrls,
+          timestamp: newDiary.createdAt
+        };
+
+        setEvents({
+          ...events,
+          [dateKey]: [...(events[dateKey] || []), newEvent],
+        });
+      }
+      
+      setShowModal(false);
+      setUploadedFiles([]);
+      setPreviewUrls([]);
+      setFormData({ name: '', content: '', plant: '', plantId: null });
+      setSelectedDate(null); // 달력 화면으로 돌아가기
+    } catch (error) {
+      console.error("다이어리 저장에 실패했습니다.", error);
+      alert('다이어리 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (dateKey, idx) => {
-    const updated = events[dateKey].filter((_, i) => i !== idx);
-    setEvents({ ...events, [dateKey]: updated });
+  // 백엔드 API 연동 추가
+  const handleDelete = async (dateKey, idx) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const diary = events[dateKey][idx];
+      const plant = plants.find(p => p.name === diary.plant);
+      
+      if (!plant) {
+        alert('식물 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      await apiClient.delete(`/api/plants/${plant.id}/diaries/${diary.id}`);
+      
+      const updated = events[dateKey].filter((_, i) => i !== idx);
+      setEvents({ ...events, [dateKey]: updated });
+      
+      // 삭제 후 달력 화면으로 돌아가기
+      setSelectedDate(null);
+    } catch (error) {
+      console.error("다이어리 삭제에 실패했습니다.", error);
+      alert('다이어리 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleEdit = (idx) => {
     const dateKey = formatDate(selectedDate);
     const event = events[dateKey][idx];
+    const plant = plants.find(p => p.name === event.plant);
+    
     setEditingEvent(idx);
     setPreviewUrls(event.media || []);
     setFormData({
       name: event.name,
       content: event.content,
-      plant: event.plant || ''
+      plant: event.plant || '',
+      plantId: plant ? plant.id : null
     });
     setShowModal(true);
   };
@@ -187,7 +295,7 @@ function DiaryPage() {
     setShowModal(false);
     setUploadedFiles([]);
     setPreviewUrls([]);
-    setFormData({ name: '', content: '', plant: '' });
+    setFormData({ name: '', content: '', plant: '', plantId: null });
     setEditingEvent(null);
   };
 
@@ -195,7 +303,7 @@ function DiaryPage() {
     setEditingEvent(null);
     setPreviewUrls([]);
     setUploadedFiles([]);
-    setFormData({ name: '', content: '', plant: '' });
+    setFormData({ name: '', content: '', plant: '', plantId: null });
     setShowModal(true);
   };
 
@@ -207,6 +315,7 @@ function DiaryPage() {
 
   const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
 
+  // 달력 주 단위로 그룹화
   const calendarWeeks = [];
   const days = getCalendarDays();
   for (let i = 0; i < days.length; i += 7) {
@@ -711,7 +820,7 @@ function DiaryPage() {
                         name="plant"
                         value={p.name}
                         checked={formData.plant === p.name}
-                        onChange={(e) => setFormData({...formData, plant: e.target.value})}
+                        onChange={(e) => setFormData({...formData, plant: e.target.value, plantId: p.id})}
                         style={{ display: 'none' }}
                       />
                       <span style={{ 
@@ -734,14 +843,25 @@ function DiaryPage() {
               <button
                 onClick={closeModal}
                 style={{ flex: 1, padding: '12px', border: '1px solid #d1d5db', backgroundColor: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}
+                disabled={isLoading}
               >
                 취소
               </button>
               <button
                 onClick={handleSave}
-                style={{ flex: 1, padding: '12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}
+                style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  backgroundColor: isLoading ? '#9ca3af' : '#10b981',
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px' 
+                }}
+                disabled={isLoading}
               >
-                {editingEvent !== null ? "수정 완료" : "저장"}
+                {isLoading ? '저장 중...' : (editingEvent !== null ? "수정 완료" : "저장")}
               </button>
             </div>
           </div>
